@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { loginApi } from "../../api/auth.api"
 import { useAuthStore } from "../../store/auth.store"
+import { ArrowRight, Loader2 } from "lucide-react"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -38,35 +39,47 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-80 mesh-gradient opacity-80 blur-3xl" />
+      <div className="w-full max-w-md relative">
 
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">BookingApp</h1>
-          <p className="text-gray-500 mt-1 text-sm">Admin Panel</p>
+          <div className="mx-auto mb-4 h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center shadow-vercel-sm bg-white border border-[#ebebeb]">
+            <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
+          </div>
+          <p className="mono-label mb-2">booking workspace</p>
+          <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px] text-neutral-950">
+            Sign in to your account.
+          </h1>
+          <p className="text-body mt-2 text-sm">
+            Manage bookings, clients, staff and branch operations from one focused console.
+          </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Sign in to your account
-          </h2>
+        <div className="bg-white rounded-lg shadow-vercel-lg border border-[#ebebeb] p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-base font-semibold tracking-[-0.28px] text-neutral-950">
+              Admin login
+            </h2>
+            <span className="mono-label">secure</span>
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Email
               </label>
               <input
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
-                className={`w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition
-                  focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  ${errors.email ? "border-red-400 bg-red-50" : "border-gray-300 bg-white"}`}
+                className={`w-full px-3 py-2.5 rounded-md border text-sm outline-none transition shadow-[inset_0_0_0_1px_#00000005]
+                  focus:ring-2 focus:ring-neutral-950 focus:border-transparent
+                  ${errors.email ? "border-red-400 bg-red-50" : "border-[#d4d4d4] bg-white"}`}
                 {...register("email")}
               />
               {errors.email && (
@@ -76,16 +89,16 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Password
               </label>
               <input
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className={`w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition
-                  focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                  ${errors.password ? "border-red-400 bg-red-50" : "border-gray-300 bg-white"}`}
+                className={`w-full px-3 py-2.5 rounded-md border text-sm outline-none transition shadow-[inset_0_0_0_1px_#00000005]
+                  focus:ring-2 focus:ring-neutral-950 focus:border-transparent
+                  ${errors.password ? "border-red-400 bg-red-50" : "border-[#d4d4d4] bg-white"}`}
                 {...register("password")}
               />
               {errors.password && (
@@ -95,7 +108,7 @@ export default function LoginPage() {
 
             {/* API error */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <div className="bg-red-50 border border-red-200 rounded-md px-4 py-3">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -104,11 +117,21 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60
-                         text-white font-medium py-2.5 px-4 rounded-lg text-sm
-                         transition-colors duration-150 mt-2"
+              className="w-full bg-neutral-950 hover:bg-neutral-900 disabled:opacity-60
+                         text-white font-medium py-2.5 px-4 rounded-full text-sm
+                         transition-colors duration-150 mt-2 flex items-center justify-center gap-2 shadow-vercel-sm"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in
+                </>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
 
           </form>
