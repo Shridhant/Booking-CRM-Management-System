@@ -23,6 +23,13 @@ export interface LoginInput {
     password: string
 }
 
+export interface RegisterCustomerInput {
+    name: string
+    email: string
+    phone: string
+    password: string
+}
+
 export interface RefreshTokenInput {
     refreshToken: string
 }

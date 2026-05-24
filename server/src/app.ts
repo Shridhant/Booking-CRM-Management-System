@@ -4,6 +4,8 @@ import { errorMiddleware } from "./middleware/error.middleware"
 
 import authRoutes from "./modules/auth/auth.routes"
 
+import publicRoutes from "./modules/public/public.routes"
+
 import userRoutes from "./modules/profile/profile.routes"
 
 import businessRoutes from "./modules/businesses/businesses.routes"
@@ -16,7 +18,9 @@ import employeeRoutes from './modules/employees/employees.routes'
 
 import serviceRoutes from './modules/services/services.routes'
 
-import customerRoutes from './modules/customer/customers.routes'
+import crmCustomerRoutes from './modules/customer/customers.routes'
+
+import customerRoutes from './modules/customer/customer.routes'
 
 import bookingRoutes from './modules/bookings/bookings.routes'
 
@@ -36,6 +40,8 @@ app.get("/health", (req, res) => {
 
 // Public
 app.use("/api/auth", authRoutes)
+
+app.use("/api/public", publicRoutes)
 
 // Super admin only
 app.use("/api/admin", adminRoutes)
@@ -63,7 +69,11 @@ app.use("/api/businesses/:businessId/employees/:employeeId/availability", availa
 
 //Customer routes
 
-app.use("/api/businesses/:businessId/customers", customerRoutes)
+app.use("/api/businesses/:businessId/customers", crmCustomerRoutes)
+
+// Authenticated customer personal space
+
+app.use("/api/customer", customerRoutes)
 
 //booking routes
 
