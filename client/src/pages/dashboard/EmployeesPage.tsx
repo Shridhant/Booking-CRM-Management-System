@@ -10,6 +10,7 @@ import {
   deactivateEmployeeApi
 } from "../../api/employees.api"
 import { listBranchesApi } from "../../api/branches.api"
+import { listBookingsApi } from "../../api/bookings.api"
 import {
   getAvailabilityApi,
   setAvailabilityApi,
@@ -31,7 +32,9 @@ import {
   Briefcase,
   Clock,
   Calendar,
-  CalendarOff
+  CalendarOff,
+
+  CalendarCheck
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import type { Employee } from "../../types"
@@ -44,7 +47,7 @@ export default function EmployeesPage() {
   // ── States ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("")
   const [branchFilter, setBranchFilter] = useState<string>("all") // "all" or specific branchId
-  
+
   // Drawer states
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerType, setDrawerType] = useState<"add" | "edit">("add")
@@ -58,7 +61,7 @@ export default function EmployeesPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   // Tab state for edit drawer
-  const [activeTab, setActiveTab] = useState<"profile" | "schedule" | "timeoff">("profile")
+  const [activeTab, setActiveTab] = useState<"profile" | "schedule" | "timeoff" | "bookings">("profile")
 
   // Weekly Schedule states
   const [localSchedule, setLocalSchedule] = useState<{
@@ -122,6 +125,46 @@ export default function EmployeesPage() {
         : Promise.resolve([]),
     enabled: drawerOpen && drawerType === "edit" && activeTab === "timeoff" && !!activeEmployee?.id
   })
+
+  // Fetch booking history for employee
+  const { data: employeeBookings = [], isLoading: isBookingsLoading } = useQuery({
+    queryKey: ["employeeBookings", businessId, activeEmployee?.id],
+    queryFn: () =>
+      businessId && activeEmployee?.id
+        ? listBookingsApi(businessId, { employee_id: activeEmployee.id })
+        : Promise.resolve([]),
+    enabled: drawerOpen && drawerType === "edit" && activeTab === "bookings" && !!activeEmployee?.id
+  })
+
+  // ── Work History Statistics ─────────────────────────────────
+  const stats = useMemo(() => {
+    if (!employeeBookings || employeeBookings.length === 0) {
+      return { total: 0, completed: 0, active: 0, cancelled: 0, revenue: 0 }
+    }
+    let completed = 0
+    let active = 0
+    let cancelled = 0
+    let revenue = 0
+
+    employeeBookings.forEach((b) => {
+      if (b.booking_status === "completed") {
+        completed++
+        revenue += parseFloat(b.total_amount || "0")
+      } else if (b.booking_status === "confirmed" || b.booking_status === "pending") {
+        active++
+      } else if (b.booking_status === "cancelled" || b.booking_status === "no_show") {
+        cancelled++
+      }
+    })
+
+    return {
+      total: employeeBookings.length,
+      completed,
+      active,
+      cancelled,
+      revenue
+    }
+  }, [employeeBookings])
 
   // Synchronize localSchedule state with fetched database scheduleData
   useEffect(() => {
@@ -355,7 +398,7 @@ export default function EmployeesPage() {
     return employees.filter((emp) => {
       // Search filter
       const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase())
-      
+
       // Branch filter
       const matchesBranch =
         branchFilter === "all" || emp.branches.some((b) => b.branch_id === branchFilter)
@@ -537,10 +580,9 @@ export default function EmployeesPage() {
                         {/* Active Badge */}
                         <span
                           className={`text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase
-                            ${
-                              emp.is_active
-                                ? "bg-emerald-50 text-emerald-600"
-                                : "bg-red-50 text-red-600"
+                            ${emp.is_active
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-red-50 text-red-600"
                             }`}
                         >
                           {emp.is_active ? "Active" : "Inactive"}
@@ -617,9 +659,8 @@ export default function EmployeesPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className={`relative w-full bg-white h-full shadow-vercel-lg flex flex-col overflow-hidden transition-all duration-300 ${
-                activeTab === "profile" ? "max-w-md" : "max-w-xl"
-              }`}
+              className={`relative w-full bg-white h-full shadow-vercel-lg flex flex-col overflow-hidden transition-all duration-300 ${activeTab === "profile" ? "max-w-md" : "max-w-xl"
+                }`}
             >
               {/* Drawer Header */}
               <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-gray-50/50 shrink-0">
@@ -647,11 +688,10 @@ export default function EmployeesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("profile")}
-                    className={`py-3.5 font-semibold relative transition ${
-                      activeTab === "profile"
-                        ? "text-neutral-950"
-                        : "text-gray-400 hover:text-gray-600"
-                    }`}
+                    className={`py-3.5 font-semibold relative transition ${activeTab === "profile"
+                      ? "text-neutral-950"
+                      : "text-gray-400 hover:text-gray-600"
+                      }`}
                   >
                     Profile Details
                     {activeTab === "profile" && (
@@ -664,11 +704,10 @@ export default function EmployeesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("schedule")}
-                    className={`py-3.5 font-semibold relative transition ${
-                      activeTab === "schedule"
-                        ? "text-neutral-950"
-                        : "text-gray-400 hover:text-gray-600"
-                    }`}
+                    className={`py-3.5 font-semibold relative transition ${activeTab === "schedule"
+                      ? "text-neutral-950"
+                      : "text-gray-400 hover:text-gray-600"
+                      }`}
                   >
                     Weekly Schedule
                     {activeTab === "schedule" && (
@@ -681,14 +720,29 @@ export default function EmployeesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("timeoff")}
-                    className={`py-3.5 font-semibold relative transition ${
-                      activeTab === "timeoff"
-                        ? "text-neutral-950"
-                        : "text-gray-400 hover:text-gray-600"
-                    }`}
+                    className={`py-3.5 font-semibold relative transition ${activeTab === "timeoff"
+                      ? "text-neutral-950"
+                      : "text-gray-400 hover:text-gray-600"
+                      }`}
                   >
                     Time Off / Leave
                     {activeTab === "timeoff" && (
+                      <motion.div
+                        layoutId="activeTabUnderline"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-950"
+                      />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("bookings")}
+                    className={`py-3.5 font-semibold relative transition ${activeTab === "bookings"
+                      ? "text-neutral-950"
+                      : "text-gray-400 hover:text-gray-600"
+                      }`}
+                  >
+                    Work History
+                    {activeTab === "bookings" && (
                       <motion.div
                         layoutId="activeTabUnderline"
                         className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-950"
@@ -796,10 +850,9 @@ export default function EmployeesPage() {
                                 />
                                 <div
                                   className={`h-5 w-5 rounded-md border flex items-center justify-center transition
-                                    ${
-                                      isChecked
-                                        ? "bg-neutral-950 border-neutral-950 text-white shadow-vercel-sm"
-                                        : "border-gray-300 bg-white"
+                                    ${isChecked
+                                      ? "bg-neutral-950 border-neutral-950 text-white shadow-vercel-sm"
+                                      : "border-gray-300 bg-white"
                                     }`}
                                 >
                                   {isChecked && <Check className="h-3.5 w-3.5 stroke-[3px]" />}
@@ -913,14 +966,12 @@ export default function EmployeesPage() {
                                     updated[index].is_off = !updated[index].is_off
                                     setLocalSchedule(updated)
                                   }}
-                                  className={`w-10 h-6 rounded-full p-0.5 transition duration-200 focus:outline-none shrink-0 ${
-                                    !slot.is_off ? "bg-neutral-950" : "bg-gray-200"
-                                  }`}
+                                  className={`w-10 h-6 rounded-full p-0.5 transition duration-200 focus:outline-none shrink-0 ${!slot.is_off ? "bg-neutral-950" : "bg-gray-200"
+                                    }`}
                                 >
                                   <div
-                                    className={`bg-white w-5 h-5 rounded-full shadow-vercel-md transform transition duration-200 ${
-                                      !slot.is_off ? "translate-x-4" : "translate-x-0"
-                                    }`}
+                                    className={`bg-white w-5 h-5 rounded-full shadow-vercel-md transform transition duration-200 ${!slot.is_off ? "translate-x-4" : "translate-x-0"
+                                      }`}
                                   />
                                 </button>
                                 <span className="text-xs font-semibold text-gray-800 ">
@@ -992,7 +1043,7 @@ export default function EmployeesPage() {
                     </button>
                   </div>
                 </>
-              ) : (
+              ) : activeTab === "timeoff" ? (
                 <>
                   {/* Time Off & Leaves Component */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -1157,6 +1208,148 @@ export default function EmployeesPage() {
                       type="button"
                       onClick={() => setDrawerOpen(false)}
                       className="px-5 py-2.5 rounded-md bg-gray-900 hover:bg-gray-800 text-sm font-semibold text-white transition shadow-vercel-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Work History & Booking logs */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Header */}
+                    <div className="bg-neutral-100/70 rounded-md p-4 border border-neutral-200 flex items-center gap-3">
+                      <CalendarCheck className="h-5 w-5 text-neutral-950 shrink-0" />
+                      <div className="text-left">
+                        <h5 className="text-xs font-semibold text-neutral-950">Employee Performance & Work Logs</h5>
+                        <p className="text-[10px] text-neutral-800/80 mt-0.5 leading-relaxed">
+                          Review overall historical bookings, completed sessions, and total revenue generated by this practitioner.
+                        </p>
+                      </div>
+                    </div>
+
+                    {isBookingsLoading ? (
+                      <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
+                        <Loader2 className="h-8 w-8 text-neutral-950 animate-spin" />
+                        <span className="text-xs font-semibold">Loading work logs...</span>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Statistics Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-white border border-gray-100 rounded-lg p-3.5 shadow-vercel-sm text-left">
+                            <span className="text-[9px] font-semibold text-gray-400 block uppercase">Total Jobs</span>
+                            <span className="text-xl font-bold text-gray-900 mt-1 block">{stats.total}</span>
+                          </div>
+                          <div className="bg-white border border-gray-100 rounded-lg p-3.5 shadow-vercel-sm text-left">
+                            <span className="text-[9px] font-semibold text-gray-400 block uppercase">Completed</span>
+                            <span className="text-xl font-bold text-emerald-600 mt-1 block">{stats.completed}</span>
+                          </div>
+                          <div className="bg-white border border-gray-100 rounded-lg p-3.5 shadow-vercel-sm text-left">
+                            <span className="text-[9px] font-semibold text-gray-400 block uppercase">Revenue</span>
+                            <span className="text-xl font-bold text-neutral-950 mt-1 block">${stats.revenue.toFixed(2)}</span>
+                          </div>
+                          <div className="bg-white border border-gray-100 rounded-lg p-3.5 shadow-vercel-sm text-left">
+                            <span className="text-[9px] font-semibold text-gray-400 block uppercase">Active Slots</span>
+                            <span className="text-xl font-bold text-blue-600 mt-1 block">{stats.active}</span>
+                          </div>
+                        </div>
+
+                        {/* Booking list */}
+                        <div className="space-y-3.5">
+                          <h4 className="text-xs font-semibold text-gray-800 flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 text-neutral-700" />
+                            Booking Log Registry ({employeeBookings.length})
+                          </h4>
+
+                          {employeeBookings.length === 0 ? (
+                            <div className="text-center py-16 bg-gray-50/20 border border-dashed border-gray-200 rounded-lg">
+                              <p className="text-xs text-gray-400">No bookings associated with this employee yet.</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                              {employeeBookings.map((b: any) => {
+                                const bookingDateStr = new Date(b.booking_date).toLocaleDateString([], {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric"
+                                })
+                                const startStr = b.start_time.substring(0, 5)
+                                const endStr = b.end_time.substring(0, 5)
+                                const serviceNames = b.services?.map((s: any) => s.service_name).join(", ") || "No services specified"
+
+                                // Status Badge styling
+                                let statusClasses = "bg-gray-100 text-gray-700 border-gray-200/50"
+                                if (b.booking_status === "completed") {
+                                  statusClasses = "bg-emerald-50 text-emerald-700 border-emerald-200/50"
+                                } else if (b.booking_status === "confirmed") {
+                                  statusClasses = "bg-blue-50 text-blue-700 border-blue-200/50"
+                                } else if (b.booking_status === "cancelled") {
+                                  statusClasses = "bg-red-50 text-red-700 border-red-200/50"
+                                } else if (b.booking_status === "no_show") {
+                                  statusClasses = "bg-amber-50 text-amber-700 border-amber-200/50"
+                                }
+
+                                return (
+                                  <div
+                                    key={b.id}
+                                    className="p-4 rounded-lg border border-gray-100 bg-white hover:border-gray-200 shadow-vercel-sm transition text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                                  >
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-gray-800">
+                                          {b.customer_name || "Walk-in Guest"}
+                                        </span>
+                                        {b.customer_phone && (
+                                          <span className="text-[10px] font-semibold text-gray-400">
+                                            ({b.customer_phone})
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
+                                        Services: <span className="text-gray-700">{serviceNames}</span>
+                                      </p>
+                                      <div className="flex items-center gap-3.5 text-[10px] font-semibold text-gray-400 pt-0.5">
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                                          {bookingDateStr}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                                          {startStr} — {endStr}
+                                        </span>
+                                        {b.branch_name && (
+                                          <span className="flex items-center gap-1">
+                                            <Building className="h-3.5 w-3.5 text-gray-400" />
+                                            {b.branch_name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2.5 shrink-0 border-t sm:border-t-0 border-gray-50 pt-2.5 sm:pt-0">
+                                      <span className="text-sm font-bold text-neutral-950">
+                                        ${parseFloat(b.total_amount || "0").toFixed(2)}
+                                      </span>
+                                      <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full capitalize ${statusClasses}`}>
+                                        {b.booking_status.replace("_", " ")}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Drawer Footer for Work History */}
+                  <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setDrawerOpen(false)}
+                      className="px-5 py-2.5 rounded-md bg-neutral-950 hover:bg-neutral-900 text-sm font-semibold text-white transition shadow-vercel-sm cursor-pointer"
                     >
                       Close
                     </button>

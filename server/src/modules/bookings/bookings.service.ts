@@ -1,5 +1,6 @@
 import { db } from "../../config/db"
 import { ApiError } from "../../utils/api-error"
+import { createNotification } from "../notifications/notifications.service"
 import {
   Booking,
   CreateBookingInput,
@@ -515,22 +516,25 @@ export const updateBookingStatus = async (
 
   const current = existing.rows[0].booking_status
 
-  // Prevent invalid status transitions
-  const invalidTransitions: Record<string, string[]> = {
-    completed: ["pending", "confirmed"],
-    cancelled: ["completed"],
-    no_show: ["pending", "cancelled", "completed"],
+  // Enforce strict lifecycle: pending → confirmed → completed
+  // Define which statuses each current status is ALLOWED to transition to
+  const allowedTransitions: Record<string, string[]> = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["completed", "cancelled", "no_show"],
+    completed: [],       // terminal state
+    cancelled: [],       // terminal state
+    no_show: [],         // terminal state
   }
 
-  if (
-    invalidTransitions[current] &&
-    invalidTransitions[current].includes(booking_status)
-  ) {
+  const allowed = allowedTransitions[current]
+  if (allowed && !allowed.includes(booking_status)) {
     throw new ApiError(
       400,
-      `Cannot change status from "${current}" to "${booking_status}"`
+      `Cannot change status from "${current}" to "${booking_status}". ${current === "pending" ? "You must confirm the booking first." : ""}`
     )
   }
+
+
 
   // If cancelling, log a cancellation record
   if (booking_status === "cancelled") {
@@ -548,6 +552,24 @@ export const updateBookingStatus = async (
      RETURNING *`,
     [booking_status, bookingId]
   )
+
+  const updatedBooking = result.rows[0]
+  if (booking_status === "confirmed" && updatedBooking.customer_user_id) {
+    try {
+      const bizRes = await db.query(`SELECT name FROM businesses WHERE id = $1`, [businessId])
+      const businessName = bizRes.rows[0]?.name || "the business"
+      await createNotification({
+        user_id: updatedBooking.customer_user_id,
+        title: "Booking Confirmed! 🎉",
+        message: `Your booking at ${businessName} on ${updatedBooking.booking_date} at ${updatedBooking.start_time} has been confirmed.`,
+        type: "booking_confirmed",
+        related_entity_type: "booking",
+        related_entity_id: bookingId,
+      })
+    } catch (notifErr) {
+      console.error("Failed to send booking confirmation notification:", notifErr)
+    }
+  }
 
   return getBookingDetail(result.rows[0].id)
 }
@@ -649,4 +671,120 @@ export const assignEmployee = async (
   )
 
   return getBookingDetail(bookingId)
+}
+
+// ==============================================
+// CHECKOUT BOOKING & GENERATE INVOICE
+// ==============================================
+export const checkoutBooking = async (
+  businessId: string,
+  bookingId: string,
+  userId: string,
+  role: string,
+  input: {
+    payment_type: "pay_online" | "pay_at_salon"
+    payment_method: "cash" | "card" | "upi" | "other"
+    notes?: string
+    services: {
+      service_id: string
+      employee_id: string | null
+      price: number
+      duration_minutes: number
+    }[]
+  }
+): Promise<Booking> => {
+  await verifyBusinessOwnership(businessId, userId, role)
+
+  // Verify booking exists and belongs to this business
+  const existing = await db.query(
+    `SELECT id, booking_status, customer_id, branch_id FROM bookings
+     WHERE id = $1 AND business_id = $2`,
+    [bookingId, businessId]
+  )
+
+  if (!existing.rows[0]) {
+    throw new ApiError(404, "Booking not found")
+  }
+
+  const booking = existing.rows[0]
+
+  if (booking.booking_status !== "confirmed") {
+    throw new ApiError(
+      400,
+      booking.booking_status === "pending"
+        ? "You must confirm this booking before checking out. The booking is still pending."
+        : `Cannot checkout a ${booking.booking_status} booking`
+    )
+  }
+
+  // Start Transaction
+  const client = await db.connect()
+  try {
+    await client.query("BEGIN")
+
+    // 1. Delete all old booking services
+    await client.query(
+      `DELETE FROM booking_services WHERE booking_id = $1`,
+      [bookingId]
+    )
+
+    // 2. Insert new customized booking services
+    for (const s of input.services) {
+      await client.query(
+        `INSERT INTO booking_services (
+          booking_id, service_id, employee_id, price, duration_minutes
+        ) VALUES ($1, $2, $3, $4, $5)`,
+        [
+          bookingId,
+          s.service_id,
+          s.employee_id || null,
+          s.price,
+          s.duration_minutes
+        ]
+      )
+    }
+
+    // 3. Calculate new total amount
+    const totalAmount = input.services.reduce((sum, s) => sum + s.price, 0)
+
+    // 4. Update the main booking record
+    await client.query(
+      `UPDATE bookings
+       SET booking_status = 'completed',
+           total_amount = $1,
+           payment_status = 'paid',
+           payment_type = $2,
+           notes = COALESCE($3, notes),
+           updated_at = NOW()
+       WHERE id = $4`,
+      [
+        totalAmount,
+        input.payment_type,
+        input.notes ?? null,
+        bookingId
+      ]
+    )
+
+    // 5. Create payment record in payments table
+    await client.query(
+      `INSERT INTO payments (
+        booking_id, amount, payment_gateway, transaction_id, status, paid_at
+      ) VALUES ($1, $2, 'in_store_pos', $3, 'paid', NOW())`,
+      [
+        bookingId,
+        totalAmount,
+        input.payment_method
+      ]
+    )
+
+    await client.query("COMMIT")
+
+    // Return the updated full booking details
+    return getBookingDetail(bookingId)
+  } catch (err) {
+    await client.query("ROLLBACK")
+    throw err
+  } finally {
+    client.release()
+  }
 }

@@ -6,6 +6,7 @@ import {
   getBookingByIdController,
   updateBookingStatusController,
   assignEmployeeController,
+  checkoutBookingController,
 } from "./bookings.controller"
 import { authenticate } from "../../middleware/auth.middleware"
 import { authorize } from "../../middleware/role.middleware"
@@ -14,6 +15,7 @@ import {
   createBookingSchema,
   updateBookingStatusSchema,
   assignEmployeeSchema,
+  checkoutBookingSchema,
 } from "./bookings.validation"
 
 const router = Router({ mergeParams: true })
@@ -54,6 +56,13 @@ router.patch(
   "/:bookingId/assign",
   validate(assignEmployeeSchema),
   assignEmployeeController
+)
+
+// POST /api/businesses/:businessId/bookings/:bookingId/checkout
+router.post(
+  "/:bookingId/checkout",
+  validate(checkoutBookingSchema),
+  checkoutBookingController
 )
 
 export default router

@@ -9,6 +9,7 @@ import {
   getBookingById,
   updateBookingStatus,
   assignEmployee,
+  checkoutBooking,
 } from "./bookings.service"
 import { GetSlotsSchema } from "./bookings.validation"
 
@@ -114,6 +115,22 @@ export const assignEmployeeController = asyncHandler(
 
     res.status(200).json(
       new ApiResponse(200, booking, "Employee assigned successfully")
+    )
+  }
+)
+
+export const checkoutBookingController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const booking = await checkoutBooking(
+      req.params.businessId! as string,
+      req.params.bookingId! as string,
+      req.user!.userId,
+      req.user!.role,
+      req.body
+    )
+
+    res.status(200).json(
+      new ApiResponse(200, booking, "Booking checked out and invoice generated successfully")
     )
   }
 )

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -16,8 +16,10 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
+  const isCustomerLogin = searchParams.get("as") === "customer"
 
   const {
     register,
@@ -32,9 +34,11 @@ export default function LoginPage() {
     try {
       const tokens = await loginApi(data.email, data.password)
       login(tokens.accessToken, tokens.refreshToken)
-      navigate("/dashboard")
-    } catch (err: any) {
-      setError(err || "Login failed. Please try again.")
+      const decodedRole = useAuthStore.getState().user?.role
+      const nextPath = searchParams.get("next")
+      navigate(nextPath || (decodedRole === "customer" ? "/customer/bookings" : "/dashboard"), { replace: true })
+    } catch (err: unknown) {
+      setError(typeof err === "string" ? err : "Login failed. Please try again.")
     }
   }
 
@@ -50,10 +54,12 @@ export default function LoginPage() {
           </div>
           <p className="mono-label mb-2">booking workspace</p>
           <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px] text-neutral-950">
-            Sign in to your account.
+            {isCustomerLogin ? "Sign in to book." : "Sign in to your account."}
           </h1>
           <p className="text-body mt-2 text-sm">
-            Manage bookings, clients, staff and branch operations from one focused console.
+            {isCustomerLogin
+              ? "Use your customer account to confirm bookings and manage appointments."
+              : "Manage bookings, clients, staff and branch operations from one focused console."}
           </p>
         </div>
 
@@ -61,7 +67,7 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-vercel-lg border border-[#ebebeb] p-6 sm:p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-base font-semibold tracking-[-0.28px] text-neutral-950">
-              Admin login
+              {isCustomerLogin ? "Customer login" : "Admin login"}
             </h2>
             <span className="mono-label">secure</span>
           </div>
@@ -135,6 +141,17 @@ export default function LoginPage() {
             </button>
 
           </form>
+          {isCustomerLogin && (
+            <p className="mt-5 text-center text-sm text-neutral-500">
+              New customer?{" "}
+              <Link
+                to={`/register${searchParams.get("next") ? `?next=${encodeURIComponent(searchParams.get("next") || "")}` : ""}`}
+                className="font-medium text-neutral-950 hover:underline"
+              >
+                Create an account
+              </Link>
+            </p>
+          )}
         </div>
 
       </div>

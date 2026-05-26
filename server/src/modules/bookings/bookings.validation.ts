@@ -46,3 +46,17 @@ export type CreateBookingSchema = z.infer<typeof createBookingSchema>
 export type UpdateBookingStatusSchema = z.infer<typeof updateBookingStatusSchema>
 export type AssignEmployeeSchema = z.infer<typeof assignEmployeeSchema>
 export type GetSlotsSchema = z.infer<typeof getSlotsSchema>
+
+export const checkoutBookingSchema = z.object({
+  payment_type: z.enum(["pay_online", "pay_at_salon"]),
+  payment_method: z.enum(["cash", "card", "upi", "other"]),
+  notes: z.string().optional(),
+  services: z.array(z.object({
+    service_id: z.string().uuid("Invalid service ID"),
+    employee_id: z.string().uuid("Invalid employee ID").nullable(),
+    price: z.number().min(0, "Price must be non-negative"),
+    duration_minutes: z.number().int().min(1, "Duration must be at least 1 minute")
+  })).min(1, "At least one service is required")
+})
+
+export type CheckoutBookingSchema = z.infer<typeof checkoutBookingSchema>

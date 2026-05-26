@@ -6,7 +6,8 @@ import {
   createBookingApi,
   updateBookingStatusApi,
   assignEmployeeToBookingApi,
-  getSlotsApi
+  getSlotsApi,
+  checkoutBookingApi
 } from "../../api/bookings.api"
 import { listCustomersApi, createCustomerApi } from "../../api/customers.api"
 import { listCategoriesApi } from "../../api/services.api"
@@ -29,7 +30,10 @@ import {
   CheckSquare,
   Square,
   Sparkles,
-  Info
+  Info,
+  DollarSign,
+  Receipt,
+  Trash2
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import type { Customer, SlotResult, ServiceCategory, Service } from "../../types"
@@ -74,6 +78,21 @@ export default function BookingsPage() {
   // Accordion categories in Service Checklist
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({})
 
+  // ── Checkout & Invoice States ────────────────────────────────
+  const [checkoutBooking, setCheckoutBooking] = useState<any | null>(null)
+  const [checkoutServices, setCheckoutServices] = useState<{
+    service_id: string
+    service_name: string
+    employee_id: string | null
+    price: number
+    duration_minutes: number
+  }[]>([])
+  const [checkoutPaymentType, setCheckoutPaymentType] = useState<"pay_at_salon" | "pay_online">("pay_at_salon")
+  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState<"cash" | "card" | "upi" | "other">("cash")
+  const [checkoutNotes, setCheckoutNotes] = useState("")
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [showInvoice, setShowInvoice] = useState<any | null>(null)
+
   // ── Sync Slot Date with Dashboard Date on Open ───────────────
   useEffect(() => {
     if (isDrawerOpen) {
@@ -106,7 +125,7 @@ export default function BookingsPage() {
     queryKey: ["categories-with-services", businessId],
     queryFn: () =>
       businessId ? listCategoriesApi(businessId, true) : Promise.resolve([]),
-    enabled: !!businessId && isDrawerOpen
+    enabled: !!businessId && (isDrawerOpen || !!checkoutBooking)
   })
 
   // ── React Query: Customer Search query ───────────────────────
@@ -185,6 +204,33 @@ export default function BookingsPage() {
     },
     onError: (err: any) => {
       setBookingError(err || "Failed to book slot")
+    }
+  })
+
+  const checkoutBookingMutation = useMutation({
+    mutationFn: (data: {
+      bookingId: string
+      payment_type: "pay_online" | "pay_at_salon"
+      payment_method: "cash" | "card" | "upi" | "other"
+      notes?: string
+      services: {
+        service_id: string
+        employee_id: string | null
+        price: number
+        duration_minutes: number
+      }[]
+    }) => {
+      if (!businessId) throw new Error("Missing Business ID")
+      const { bookingId, ...payload } = data
+      return checkoutBookingApi(businessId, bookingId, payload)
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", businessId, branchId, bookingDate] })
+      setShowInvoice(data)
+      setCheckoutBooking(null)
+    },
+    onError: (err: any) => {
+      setCheckoutError(err || "Checkout failed")
     }
   })
 
@@ -333,6 +379,23 @@ export default function BookingsPage() {
       payment_type: paymentType,
       notes: bookingNotes || undefined
     })
+  }
+
+  const handleOpenCheckout = (booking: any) => {
+    setCheckoutBooking(booking)
+    setCheckoutServices(
+      booking.services?.map((s: any) => ({
+        service_id: s.service_id,
+        service_name: s.service_name,
+        employee_id: s.employee_id || booking.employee_id || null,
+        price: Number(s.price || 0),
+        duration_minutes: Number(s.duration_minutes || 0)
+      })) || []
+    )
+    setCheckoutPaymentType(booking.payment_type || "pay_at_salon")
+    setCheckoutPaymentMethod("cash")
+    setCheckoutNotes(booking.notes || "")
+    setCheckoutError(null)
   }
 
   return (
@@ -566,26 +629,26 @@ export default function BookingsPage() {
                         </div>
 
                         {/* Quick Status Buttons */}
-                        <div className="flex gap-1">
+                        <div className="flex gap-1.5">
                           {booking.booking_status === "pending" && (
                             <>
                               <button
                                 onClick={() =>
                                   updateStatusMutation.mutate({ id: booking.id, status: "confirmed" })
                                 }
-                                className="p-2 bg-neutral-100 hover:bg-neutral-100 text-neutral-950 rounded-md border border-neutral-200 shadow-vercel-sm transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold rounded-md shadow-vercel-sm transition"
                                 title="Confirm Booking"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-3.5 w-3.5" /> Confirm
                               </button>
                               <button
                                 onClick={() =>
                                   updateStatusMutation.mutate({ id: booking.id, status: "cancelled" })
                                 }
-                                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md border border-rose-100/50 shadow-vercel-sm transition"
-                                title="Cancel Booking"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-md border border-rose-100/50 shadow-vercel-sm transition"
+                                title="Decline Booking"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" /> Decline
                               </button>
                             </>
                           )}
@@ -593,22 +656,20 @@ export default function BookingsPage() {
                           {booking.booking_status === "confirmed" && (
                             <>
                               <button
-                                onClick={() =>
-                                  updateStatusMutation.mutate({ id: booking.id, status: "completed" })
-                                }
-                                className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-md border border-emerald-100/50 shadow-vercel-sm transition"
-                                title="Complete Appointment"
+                                onClick={() => handleOpenCheckout(booking)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-vercel-sm transition"
+                                title="Complete Session & Checkout"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-3.5 w-3.5" /> Complete Session
                               </button>
                               <button
                                 onClick={() =>
                                   updateStatusMutation.mutate({ id: booking.id, status: "cancelled" })
                                 }
-                                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md border border-rose-100/50 shadow-vercel-sm transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-md border border-rose-100/50 shadow-vercel-sm transition"
                                 title="Cancel Booking"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" /> Cancel
                               </button>
                             </>
                           )}
@@ -1279,6 +1340,435 @@ export default function BookingsPage() {
                 )}
               </div>
             </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      {/* ── Checkout Drawer AnimatePresence ─────────────────────── */}
+      <AnimatePresence>
+        {checkoutBooking && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCheckoutBooking(null)}
+              className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs z-40"
+            />
+
+            {/* Slide Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white border-l border-gray-100 shadow-vercel-lg z-50 flex flex-col text-left"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-neutral-950 text-white shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-neutral-800 rounded-md text-white">
+                    <Receipt className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold">Session Checkout</h3>
+                    <p className="text-[10px] text-neutral-400 font-semibold uppercase">
+                      Client: {checkoutBooking.customer_name || "Walk-in Guest"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCheckoutBooking(null)}
+                  className="p-1.5 rounded-md bg-neutral-900/60 text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {checkoutError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-xs font-semibold">
+                    {checkoutError}
+                  </div>
+                )}
+
+                {/* 1. Itemized Services */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Services Performed</h4>
+                    <span className="text-[10px] font-semibold text-neutral-955 bg-neutral-100 px-2 py-0.5 rounded-md">
+                      {checkoutServices.length} Items
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    {checkoutServices.map((s, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-lg border border-gray-100 bg-gray-50/30 space-y-3 relative group"
+                      >
+                        {/* Remove item */}
+                        <button
+                          type="button"
+                          onClick={() => setCheckoutServices(checkoutServices.filter((_, i) => i !== idx))}
+                          className="absolute right-3 top-3.5 p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+
+                        <div className="pr-8">
+                          <p className="text-xs font-bold text-gray-800">{s.service_name}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          {/* Price input */}
+                          <div>
+                            <label className="block text-[9px] font-semibold text-gray-400 uppercase mb-1">Price (₹)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={s.price}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0
+                                const updated = [...checkoutServices]
+                                updated[idx].price = val
+                                setCheckoutServices(updated)
+                              }}
+                              className="w-full px-2.5 py-1.5 border border-gray-200 rounded-md outline-none text-xs font-semibold text-gray-800 bg-white"
+                            />
+                          </div>
+
+                          {/* Staff selection */}
+                          <div>
+                            <label className="block text-[9px] font-semibold text-gray-400 uppercase mb-1">Rendered By</label>
+                            <select
+                              value={s.employee_id || ""}
+                              onChange={(e) => {
+                                const updated = [...checkoutServices]
+                                updated[idx].employee_id = e.target.value || null
+                                setCheckoutServices(updated)
+                              }}
+                              className="w-full px-2 py-1.5 border border-gray-200 rounded-md outline-none text-xs font-semibold text-gray-800 bg-white"
+                            >
+                              <option value="">Unassigned</option>
+                              {employees.map((emp) => (
+                                <option key={emp.id} value={emp.id}>
+                                  {emp.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add extra service drop box */}
+                  <div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (!val) return
+                        const svc = flatServices.find((s) => s.id === val)
+                        if (svc) {
+                          setCheckoutServices([
+                            ...checkoutServices,
+                            {
+                              service_id: svc.id,
+                              service_name: svc.name,
+                              employee_id: checkoutBooking.employee_id || null,
+                              price: Number(svc.min_price || 0),
+                              duration_minutes: Number(svc.duration_minutes || 0)
+                            }
+                          ])
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-xs font-semibold text-gray-500 bg-white outline-none cursor-pointer text-center hover:bg-gray-50 hover:border-gray-400 transition"
+                    >
+                      <option value="">+ Add Unscheduled Extra Treatment</option>
+                      {flatServices
+                        .filter((s) => !checkoutServices.some((cs) => cs.service_id === s.id))
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} — ₹{Number(s.min_price).toLocaleString("en-IN")}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 2. Payment Terms & Types */}
+                <div className="space-y-4 pt-5 border-t border-gray-100">
+                  <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Payment Settings</h4>
+                  
+                  {/* Payment Type Selection */}
+                  <div className="grid grid-cols-2 gap-3.5">
+                    {[
+                      { id: "pay_at_salon", label: "In-Store Cashout" },
+                      { id: "pay_online", label: "Paid Online" }
+                    ].map((type) => {
+                      const isSel = checkoutPaymentType === type.id
+                      return (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => setCheckoutPaymentType(type.id as any)}
+                          className={`px-3 py-2.5 rounded-md border text-xs font-semibold transition cursor-pointer text-center
+                            ${isSel
+                              ? "bg-neutral-955 border-neutral-950 text-white shadow-vercel-sm"
+                              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          {type.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Payment Method Styled Selection */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-semibold text-gray-400 uppercase mb-1">Receipt Settlement Method</label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[
+                        { id: "cash", label: "Cash Payment", icon: Coins },
+                        { id: "card", label: "Swipe Card", icon: CreditCard },
+                        { id: "upi", label: "UPI / Scan QR", icon: Sparkles }
+                      ].map((method) => {
+                        const isSel = checkoutPaymentMethod === method.id
+                        return (
+                          <button
+                            key={method.id}
+                            type="button"
+                            onClick={() => setCheckoutPaymentMethod(method.id as any)}
+                            className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition cursor-pointer select-none
+                              ${isSel
+                                ? "bg-neutral-100 border-neutral-950 text-neutral-955 font-semibold"
+                                : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                          >
+                            <method.icon className="h-5 w-5 mb-1.5 shrink-0" />
+                            <span className="text-[10px] leading-tight font-medium">{method.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Checkout Notes */}
+                  <div>
+                    <label className="block text-[9px] font-semibold text-gray-400 uppercase mb-1.5">Checkout Comments (Optional)</label>
+                    <input
+                      type="text"
+                      value={checkoutNotes}
+                      onChange={(e) => setCheckoutNotes(e.target.value)}
+                      placeholder="e.g. Applied holiday discount, complimentary tea..."
+                      className="w-full px-3.5 py-2.5 rounded-md border border-gray-200 outline-none text-xs font-semibold text-gray-800 bg-white focus:border-neutral-950 transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between gap-3 shrink-0">
+                <div className="text-left">
+                  <span className="text-[9px] font-semibold text-gray-400 uppercase block">Grand Total</span>
+                  <span className="text-base font-bold text-neutral-955">
+                    ₹{checkoutServices.reduce((sum, s) => sum + s.price, 0).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutBooking(null)}
+                    className="px-4 py-2.5 border border-gray-200 rounded-md bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={checkoutBookingMutation.isPending || checkoutServices.length === 0}
+                    onClick={() =>
+                      checkoutBookingMutation.mutate({
+                        bookingId: checkoutBooking.id,
+                        payment_type: checkoutPaymentType,
+                        payment_method: checkoutPaymentMethod,
+                        notes: checkoutNotes || undefined,
+                        services: checkoutServices.map((s) => ({
+                          service_id: s.service_id,
+                          employee_id: s.employee_id,
+                          price: s.price,
+                          duration_minutes: s.duration_minutes
+                        }))
+                      })
+                    }
+                    className="flex items-center gap-2 px-5 py-2.5 bg-neutral-950 hover:bg-neutral-900 text-white rounded-md text-xs font-semibold shadow-vercel-md transition"
+                  >
+                    {checkoutBookingMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Finalize Checkout
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Printable Digital Invoice Overlay ──────────────────────── */}
+      <AnimatePresence>
+        {showInvoice && (
+          <>
+            {/* Backdrop (Hidden on printing) */}
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 print:p-0 print:bg-white print:static print:z-auto">
+              {/* Injected Invoice Printer CSS */}
+              <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                  body * {
+                    visibility: hidden;
+                  }
+                  .print-receipt-wrapper, .print-receipt-wrapper * {
+                    visibility: visible;
+                  }
+                  .print-receipt-wrapper {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    margin: 0;
+                    padding: 0;
+                    box-shadow: none !important;
+                    border: none !important;
+                  }
+                }
+              `}} />
+
+              {/* Receipt card */}
+              <div className="print-receipt-wrapper bg-white border border-gray-100 rounded-lg max-w-md w-full shadow-vercel-lg p-6 sm:p-8 flex flex-col text-left print:shadow-none print:border-none print:p-0 print:max-w-full">
+                {/* Header branding */}
+                <div className="text-center pb-6 border-b border-gray-100 space-y-1">
+                  <div className="mx-auto h-12 w-12 bg-neutral-950 rounded-full flex items-center justify-center text-white mb-2 shadow-vercel-sm">
+                    <Receipt className="h-6 w-6" />
+                  </div>
+                  <h2 className="text-base font-bold text-gray-900 tracking-tight uppercase">
+                    {selectedBusiness?.name || "Partner Workspace"}
+                  </h2>
+                  <p className="text-[10px] text-gray-400 font-semibold tracking-wide">
+                    Branch: {selectedBranch?.name} — {selectedBranch?.city}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    Date: {new Date(showInvoice.booking_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })} — {formatTime(showInvoice.start_time)}
+                  </p>
+                </div>
+
+                {/* Details grid */}
+                <div className="py-5 border-b border-gray-100 space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-semibold">Invoice Number:</span>
+                    <span className="font-bold text-gray-800">#INV-{showInvoice.id.substring(0, 8).toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-semibold">Client Name:</span>
+                    <span className="font-bold text-gray-800">{showInvoice.customer_name || "Walk-in Guest"}</span>
+                  </div>
+                  {showInvoice.customer_phone && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 font-semibold">Client Contact:</span>
+                      <span className="font-bold text-gray-800">{showInvoice.customer_phone}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-semibold">Settled Status:</span>
+                    <span className="font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase text-[9px]">PAID</span>
+                  </div>
+                </div>
+
+                {/* Itemized Table */}
+                <div className="py-5 border-b border-gray-100 space-y-3">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Services Rendered</h4>
+                  <div className="space-y-3">
+                    {showInvoice.services?.map((s: any, i: number) => {
+                      const empName = s.employee_name || employees.find((e) => e.id === s.employee_id)?.name || "Unassigned"
+                      return (
+                        <div key={i} className="flex justify-between items-start text-xs">
+                          <div className="space-y-0.5 pr-4">
+                            <p className="font-semibold text-gray-800">{s.service_name}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">Provided by: {empName}</p>
+                          </div>
+                          <span className="font-bold text-neutral-955 shrink-0">
+                            ₹{Number(s.price).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="py-5 space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-semibold">Subtotal:</span>
+                    <span className="font-bold text-gray-800">
+                      ₹{Number(showInvoice.total_amount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-semibold">Taxes & Fees (0%):</span>
+                    <span className="font-bold text-gray-800">₹0.00</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-100 items-baseline">
+                    <span className="text-xs font-bold text-gray-800">Grand Total:</span>
+                    <span className="text-lg font-bold text-neutral-955">
+                      ₹{Number(showInvoice.total_amount || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-400 font-semibold pt-1 uppercase tracking-wide">
+                    <span>Receipt Settlement:</span>
+                    <span>{showInvoice.payment_type.replace("_", " ")}</span>
+                  </div>
+                </div>
+
+                {/* Comments if any */}
+                {showInvoice.notes && (
+                  <div className="bg-gray-50 border border-gray-100 rounded-md p-3 text-[11px] text-gray-500 italic mt-1 leading-relaxed">
+                    Comment: "{showInvoice.notes}"
+                  </div>
+                )}
+
+                {/* Paid Seal */}
+                <div className="py-4 flex justify-center">
+                  <div className="border-[3px] border-emerald-500/35 border-double text-emerald-600/70 font-black text-xs px-5 py-1.5 rounded-md uppercase tracking-widest rotate-[-5deg] select-none">
+                    INVOICE PAID IN FULL
+                  </div>
+                </div>
+
+                {/* Printing action buttons (Hidden during printing) */}
+                <div className="flex gap-2.5 mt-6 pt-4 border-t border-gray-50 print:hidden shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 border border-neutral-300 rounded-md bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-neutral-950 shadow-vercel-sm transition cursor-pointer"
+                  >
+                    <Receipt className="h-4 w-4" />
+                    Print Receipt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowInvoice(null)}
+                    className="flex-1 px-4 py-2.5 rounded-md bg-neutral-950 hover:bg-neutral-900 text-xs font-bold text-white shadow-vercel-md transition cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </AnimatePresence>

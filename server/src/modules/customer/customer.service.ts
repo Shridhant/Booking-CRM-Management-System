@@ -298,7 +298,7 @@ export const createCustomerBooking = async (
         input.booking_date,
         input.start_time,
         endTime,
-        "confirmed",
+        "pending",
         input.employee_id ? "assigned" : "pending_assignment",
         "pending",
         "pay_at_salon",

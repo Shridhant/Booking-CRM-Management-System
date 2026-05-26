@@ -33,6 +33,21 @@ export interface Business {
   created_at: string
 }
 
+export interface PublicBusiness extends Business {
+  latitude?: number | null
+  longitude?: number | null
+  average_rating: number
+  review_count: number
+}
+
+export interface PaginatedResult<T> {
+  items: T[]
+  page: number
+  limit: number
+  total: number
+  total_pages: number
+}
+
 export interface BusinessSettings {
   id: string
   business_id: string
@@ -85,6 +100,14 @@ export interface ServiceCategory {
   name: string
   sort_order: number
   services?: Service[]
+}
+
+export interface PublicServiceCategory {
+  id: string | null
+  business_id: string
+  name: string
+  sort_order: number | null
+  services: Service[]
 }
 
 export interface Service {
@@ -171,6 +194,15 @@ export interface Booking {
   created_at: string
 }
 
+export interface CustomerBooking extends Booking {
+  business_name: string
+  business_slug: string
+  branch_address: string | null
+  review_id: string | null
+  review_rating: number | null
+  review_comment?: string | null
+}
+
 export interface BookingServiceItem {
   id: string
   service_id: string
@@ -192,6 +224,16 @@ export interface SlotResult {
   employee_id: string | null
   employee_name?: string
   slots: AvailableSlot[]
+}
+
+export interface PublicReview {
+  id: string
+  booking_id: string
+  business_id: string
+  rating: number
+  comment: string | null
+  customer_name: string
+  created_at: string
 }
 
 // ── API Response wrapper ──────────────────────

@@ -83,3 +83,25 @@ export const assignEmployeeToBookingApi = async (
   )
   return res.data.data
 }
+
+export const checkoutBookingApi = async (
+  businessId: string,
+  bookingId: string,
+  data: {
+    payment_type: "pay_online" | "pay_at_salon"
+    payment_method: "cash" | "card" | "upi" | "other"
+    notes?: string
+    services: {
+      service_id: string
+      employee_id: string | null
+      price: number
+      duration_minutes: number
+    }[]
+  }
+): Promise<Booking> => {
+  const res = await api.post(
+    `/businesses/${businessId}/bookings/${bookingId}/checkout`,
+    data
+  )
+  return res.data.data
+}
