@@ -93,16 +93,26 @@ export default function CustomerBusinessPage() {
     enabled: Boolean(businessIdOrSlug && activeBranchId && selectedServiceIds.length > 0)
   })
 
-  const slotChoices = useMemo(() => {
-    const choices = slotResults.flatMap((result: SlotResult) =>
-      result.slots.map((slot) => ({
-        employee_id: result.employee_id,
-        employee_name: result.employee_name,
-        start_time: slot.start_time,
-        end_time: slot.end_time
-      }))
-    )
-    return choices.sort((a, b) => a.start_time.localeCompare(b.start_time))
+  const uniqueStartTimes = useMemo(() => {
+    const timesMap = new Map<string, { start_time: string; end_time: string; employees: { id: string | null; name: string }[] }>()
+    
+    slotResults.forEach((result: SlotResult) => {
+      result.slots.forEach((slot) => {
+        if (!timesMap.has(slot.start_time)) {
+          timesMap.set(slot.start_time, {
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            employees: []
+          })
+        }
+        timesMap.get(slot.start_time)!.employees.push({
+          id: result.employee_id,
+          name: result.employee_name || "Specialist"
+        })
+      })
+    })
+    
+    return Array.from(timesMap.values()).sort((a, b) => a.start_time.localeCompare(b.start_time))
   }, [slotResults])
 
   const bookingMutation = useMutation({
@@ -377,33 +387,95 @@ export default function CustomerBusinessPage() {
                   <p className="rounded-md border border-dashed border-[#d4d4d4] p-3 text-sm text-neutral-500">
                     Select at least one service to see slots.
                   </p>
-                ) : slotChoices.length === 0 && !slotsLoading ? (
+                ) : uniqueStartTimes.length === 0 && !slotsLoading ? (
                   <p className="rounded-md border border-dashed border-[#d4d4d4] p-3 text-sm text-neutral-500">
                     No slots available for this date and branch.
                   </p>
                 ) : (
-                  <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto pr-1">
-                    {slotChoices.map((slot) => {
-                      const selected =
-                        selectedSlot?.start_time === slot.start_time &&
-                        selectedSlot?.employee_id === slot.employee_id
-                      return (
-                        <button
-                          key={`${slot.employee_id}-${slot.start_time}`}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`rounded-md border px-3 py-2 text-left text-sm transition ${
-                            selected
-                              ? "border-neutral-950 bg-neutral-950 text-white"
-                              : "border-[#ebebeb] bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950"
-                          }`}
-                        >
-                          <span className="block font-semibold">{formatTime(slot.start_time)}</span>
-                          <span className={`block truncate text-xs ${selected ? "text-white/70" : "text-neutral-500"}`}>
-                            {slot.employee_name || "Any specialist"}
-                          </span>
-                        </button>
-                      )
-                    })}
+                  <div className="space-y-3">
+                    <div className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto pr-1">
+                      {uniqueStartTimes.map((timeInfo) => {
+                        const selected = selectedSlot?.start_time === timeInfo.start_time
+                        return (
+                          <button
+                            key={timeInfo.start_time}
+                            onClick={() => {
+                              // Default to "Any Specialist" (employee_id: null)
+                              setSelectedSlot({
+                                employee_id: null,
+                                employee_name: "Any specialist",
+                                start_time: timeInfo.start_time,
+                                end_time: timeInfo.end_time
+                              })
+                            }}
+                            className={`rounded-md border px-3 py-2 text-center text-sm transition ${
+                              selected
+                                ? "border-neutral-950 bg-neutral-950 text-white"
+                                : "border-[#ebebeb] bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950"
+                            }`}
+                          >
+                            <span className="block font-semibold">{formatTime(timeInfo.start_time)}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {selectedSlot && (
+                      <div className="rounded-md border border-[#ebebeb] bg-neutral-50 p-3 space-y-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                          Select Specialist (Optional)
+                        </label>
+                        <div className="grid gap-1.5">
+                          {/* Option A: No Preference */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedSlot({
+                                ...selectedSlot,
+                                employee_id: null,
+                                employee_name: "Any specialist"
+                              })
+                            }
+                            className={`flex items-center justify-between rounded-md border p-2.5 text-left text-xs transition ${
+                              selectedSlot.employee_id === null
+                                ? "border-neutral-950 bg-white font-semibold text-neutral-950"
+                                : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                            }`}
+                          >
+                            <span>No preference (Any specialist)</span>
+                            {selectedSlot.employee_id === null && <Check className="h-3.5 w-3.5 text-neutral-950" />}
+                          </button>
+
+                          {/* Option B: Specific Stylist */}
+                          {uniqueStartTimes
+                            .find((t) => t.start_time === selectedSlot.start_time)
+                            ?.employees.map((emp) => {
+                              const isChosen = selectedSlot.employee_id === emp.id
+                              return (
+                                <button
+                                  key={emp.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedSlot({
+                                      ...selectedSlot,
+                                      employee_id: emp.id,
+                                      employee_name: emp.name
+                                    })
+                                  }
+                                  className={`flex items-center justify-between rounded-md border p-2.5 text-left text-xs transition ${
+                                    isChosen
+                                      ? "border-neutral-950 bg-white font-semibold text-neutral-950"
+                                      : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                                  }`}
+                                >
+                                  <span>{emp.name}</span>
+                                  {isChosen && <Check className="h-3.5 w-3.5 text-neutral-950" />}
+                                </button>
+                              )
+                            })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

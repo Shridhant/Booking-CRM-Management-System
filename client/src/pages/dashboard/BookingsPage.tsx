@@ -10,7 +10,7 @@ import {
   checkoutBookingApi
 } from "../../api/bookings.api"
 import { listCustomersApi, createCustomerApi } from "../../api/customers.api"
-import { listCategoriesApi } from "../../api/services.api"
+import { listCategoriesApi, listServicesApi } from "../../api/services.api"
 import { listEmployeesApi } from "../../api/employees.api"
 import { today, formatDate, formatTime } from "../../lib/date"
 import {
@@ -49,7 +49,7 @@ export default function BookingsPage() {
 
   // Drawer Form States
   const [activeStep, setActiveStep] = useState<"customer" | "services" | "schedule" | "finalize">("customer")
-  
+
   // 1. Customer Select / Create
   const [customerSearch, setCustomerSearch] = useState("")
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -62,7 +62,7 @@ export default function BookingsPage() {
 
   // 2. Services Selection
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
-  
+
   // 3. Scheduling Slots
   const [slotDate, setSlotDate] = useState(today())
   const [slotEmployeeId, setSlotEmployeeId] = useState<string>("")
@@ -124,6 +124,14 @@ export default function BookingsPage() {
     queryKey: ["categories-with-services", businessId],
     queryFn: () =>
       businessId ? listCategoriesApi(businessId, true) : Promise.resolve([]),
+    enabled: !!businessId && (isDrawerOpen || !!checkoutBooking)
+  })
+
+  // ── React Query: List all flat services ──────────────────────
+  const { data: allServices = [] } = useQuery({
+    queryKey: ["all-services", businessId],
+    queryFn: () =>
+      businessId ? listServicesApi(businessId) : Promise.resolve([]),
     enabled: !!businessId && (isDrawerOpen || !!checkoutBooking)
   })
 
@@ -234,8 +242,8 @@ export default function BookingsPage() {
   })
 
   // ── Computed Service Lists & Stats ──────────────────────────
-  const flatServices = categories.flatMap((cat) => cat.services || [])
-  
+  const flatServices = allServices
+
   const selectedServicesObjects = flatServices.filter((s) => selectedServiceIds.includes(s.id))
   const totalDuration = selectedServicesObjects.reduce((acc, s) => acc + s.duration_minutes, 0)
   const totalPrice = selectedServicesObjects.reduce((acc, s) => acc + Number(s.min_price || 0), 0)
@@ -315,7 +323,7 @@ export default function BookingsPage() {
   // ── Save New Appointment ─────────────────────────────────────
   const handleSaveAppointment = async () => {
     setBookingError(null)
-    
+
     let customerId = selectedCustomer?.id
 
     // 1. Create customer inline if checked
@@ -408,7 +416,7 @@ export default function BookingsPage() {
           >
             <ChevronLeft className="h-4.5 w-4.5" />
           </button>
-          
+
           <button
             onClick={handleToday}
             className="px-4 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 shadow-vercel-sm transition duration-150"
@@ -564,7 +572,7 @@ export default function BookingsPage() {
                             {booking.booking_status.replace("_", " ")}
                           </span>
                         </div>
-                        
+
                         {booking.customer_phone && (
                           <p className="text-xs text-gray-500 mt-0.5">{booking.customer_phone}</p>
                         )}
@@ -750,10 +758,9 @@ export default function BookingsPage() {
                       }
                       onClick={() => setActiveStep(item.step as any)}
                       className={`pb-1.5 border-b-2 transition duration-150 cursor-pointer disabled:cursor-not-allowed
-                        ${
-                          isActive
-                            ? "border-neutral-950 text-neutral-950"
-                            : isCompleted
+                        ${isActive
+                          ? "border-neutral-950 text-neutral-950"
+                          : isCompleted
                             ? "border-emerald-500 text-emerald-600"
                             : "border-gray-200 text-gray-400 hover:text-gray-600"
                         }`}
@@ -825,10 +832,9 @@ export default function BookingsPage() {
                                 key={c.id}
                                 onClick={() => setSelectedCustomer(c)}
                                 className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between transition hover:bg-neutral-100/60
-                                  ${
-                                    selectedCustomer?.id === c.id
-                                      ? "bg-neutral-100 text-neutral-800 font-semibold"
-                                      : "text-gray-700"
+                                  ${selectedCustomer?.id === c.id
+                                    ? "bg-neutral-100 text-neutral-800 font-semibold"
+                                    : "text-gray-700"
                                   }`}
                               >
                                 <div>
@@ -1184,10 +1190,9 @@ export default function BookingsPage() {
                                   }
                                 }}
                                 className={`px-2 py-2 rounded-md text-xs font-semibold border transition duration-150 text-center
-                                  ${
-                                    isSelected
-                                      ? "bg-neutral-950 text-white border-neutral-950 shadow-vercel-sm"
-                                      : "bg-white hover:bg-neutral-100/80 text-gray-700 border-gray-200"
+                                  ${isSelected
+                                    ? "bg-neutral-950 text-white border-neutral-950 shadow-vercel-sm"
+                                    : "bg-white hover:bg-neutral-100/80 text-gray-700 border-gray-200"
                                   }`}
                               >
                                 {formatTime(time)}
@@ -1248,10 +1253,9 @@ export default function BookingsPage() {
                               type="button"
                               onClick={() => setPaymentType(pay.value as any)}
                               className={`p-3.5 rounded-lg border text-left transition duration-150
-                                ${
-                                  isSelected
-                                    ? "border-neutral-950 bg-neutral-100/60 ring-1 ring-neutral-950"
-                                    : "border-gray-200 bg-white hover:bg-gray-50"
+                                ${isSelected
+                                  ? "border-neutral-950 bg-neutral-100/60 ring-1 ring-neutral-950"
+                                  : "border-gray-200 bg-white hover:bg-gray-50"
                                 }`}
                             >
                               <div className="flex items-center gap-2">
@@ -1486,9 +1490,8 @@ export default function BookingsPage() {
                       }}
                       className="w-full px-3.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-xs font-semibold text-gray-500 bg-white outline-none cursor-pointer text-center hover:bg-gray-50 hover:border-gray-400 transition"
                     >
-                      <option value="">+ Add Unscheduled Extra Treatment</option>
+                      <option value="" hidden>+ Add Unscheduled Extra Treatment</option>
                       {flatServices
-                        .filter((s) => !checkoutServices.some((cs) => cs.service_id === s.id))
                         .map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.name} — ₹{Number(s.min_price).toLocaleString("en-IN")}
@@ -1501,7 +1504,7 @@ export default function BookingsPage() {
                 {/* 2. Payment Terms & Types */}
                 <div className="space-y-4 pt-5 border-t border-gray-100">
                   <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Payment Settings</h4>
-                  
+
                   {/* Payment Type Selection */}
                   <div className="grid grid-cols-2 gap-3.5">
                     {[
@@ -1516,7 +1519,7 @@ export default function BookingsPage() {
                           onClick={() => setCheckoutPaymentType(type.id as any)}
                           className={`px-3 py-2.5 rounded-md border text-xs font-semibold transition cursor-pointer text-center
                             ${isSel
-                              ? "bg-neutral-955 border-neutral-950 text-white shadow-vercel-sm"
+                              ? "bg-neutral-955 border-neutral-950 text-black shadow-vercel-sm"
                               : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
                         >
                           {type.label}
@@ -1628,7 +1631,8 @@ export default function BookingsPage() {
             {/* Backdrop (Hidden on printing) */}
             <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 print:p-0 print:bg-white print:static print:z-auto">
               {/* Injected Invoice Printer CSS */}
-              <style dangerouslySetInnerHTML={{ __html: `
+              <style dangerouslySetInnerHTML={{
+                __html: `
                 @media print {
                   body * {
                     visibility: hidden;
