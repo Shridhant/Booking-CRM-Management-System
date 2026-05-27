@@ -5,7 +5,7 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const isProduction = process.env.NODE_ENV === "production" || 
+const isProduction = process.env.NODE_ENV === "production" ||
   (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost") && !process.env.DATABASE_URL.includes("127.0.0.1"));
 
 export const db = new Pool({

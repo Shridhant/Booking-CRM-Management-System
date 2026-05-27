@@ -1,11 +1,17 @@
+# dependencies
 node_modules/
-client/node_modules/
-server/node_modules/
 
+# builds
 dist/
 build/
 
+# environment files
 .env
+.env.*
+!.env.example
+
+# system files
 .DS_Store
 
+# docs (optional)
 api.md

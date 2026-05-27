@@ -38,6 +38,10 @@ app.get("/health", (req, res) => {
   res.json({ status: "The booking webapp is running - It is ok" })
 })
 
+app.get("/api/health", (req, res) => {
+  res.json({ status: "The booking webapp is running - It is ok" })
+})
+
 // Public
 app.use("/api/auth", authRoutes)
 
