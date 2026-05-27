@@ -149,7 +149,7 @@ export default function EmployeesPage() {
     employeeBookings.forEach((b) => {
       if (b.booking_status === "completed") {
         completed++
-        revenue += parseFloat(b.total_amount || "0")
+        revenue += Number(b.total_amount || 0)
       } else if (b.booking_status === "confirmed" || b.booking_status === "pending") {
         active++
       } else if (b.booking_status === "cancelled" || b.booking_status === "no_show") {

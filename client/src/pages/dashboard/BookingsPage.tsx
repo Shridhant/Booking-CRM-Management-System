@@ -31,7 +31,6 @@ import {
   Square,
   Sparkles,
   Info,
-  DollarSign,
   Receipt,
   Trash2
 } from "lucide-react"
@@ -1661,7 +1660,7 @@ export default function BookingsPage() {
                     {selectedBusiness?.name || "Partner Workspace"}
                   </h2>
                   <p className="text-[10px] text-gray-400 font-semibold tracking-wide">
-                    Branch: {selectedBranch?.name} — {selectedBranch?.city}
+                    Branch: {selectedBranch?.name}
                   </p>
                   <p className="text-[10px] text-gray-400 font-medium">
                     Date: {new Date(showInvoice.booking_date).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })} — {formatTime(showInvoice.start_time)}
