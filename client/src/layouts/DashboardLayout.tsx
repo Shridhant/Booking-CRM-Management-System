@@ -110,7 +110,7 @@ export default function DashboardLayout() {
       <aside className="hidden md:flex md:flex-col md:w-64 bg-white/95 border-r border-[#ebebeb] shrink-0">
         {/* Brand / Logo */}
         <div className="h-16 flex items-center gap-3 px-6 border-b border-[#ebebeb] bg-white">
-          <img src="/logo.png" alt="Logo" className="h-9 w-9 object-contain rounded-md" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="h-9 w-9 object-contain rounded-md" />
           <div>
             <h1 className="font-semibold text-sm leading-tight truncate w-40 tracking-[-0.28px] text-neutral-950">
               {selectedBusiness?.name || "BookingApp"}
@@ -189,7 +189,7 @@ export default function DashboardLayout() {
 
             {/* Brand Header */}
             <div className="h-16 flex items-center gap-3 px-6 border-b border-[#ebebeb] bg-white">
-              <img src="/logo.png" alt="Logo" className="h-9 w-9 object-contain rounded-md" />
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="h-9 w-9 object-contain rounded-md" />
               <div>
                 <h1 className="font-semibold text-sm truncate w-40 tracking-[-0.28px] text-neutral-950">
                   {selectedBusiness?.name || "BookingApp"}

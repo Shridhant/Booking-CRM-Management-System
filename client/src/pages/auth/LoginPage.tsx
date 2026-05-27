@@ -50,7 +50,7 @@ export default function LoginPage() {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center shadow-vercel-sm bg-white border border-[#ebebeb]">
-            <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="h-10 w-10 object-contain" />
           </div>
           <p className="mono-label mb-2">booking workspace</p>
           <h1 className="text-[32px] leading-10 font-semibold tracking-[-1.28px] text-neutral-950">

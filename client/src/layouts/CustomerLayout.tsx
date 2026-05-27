@@ -19,7 +19,7 @@ export default function CustomerLayout() {
             <Link to="/customer" className="group flex min-w-0 items-center gap-3">
               <div className="relative -my-1.5 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-white p-1 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.12),0_6px_12px_-5px_rgba(0,0,0,0.08)] border border-white transition-all duration-300 ease-out group-hover:scale-108 group-hover:shadow-[0_12px_24px_-4px_rgba(0,0,0,0.18)] group-active:scale-95">
                 <img
-                  src="/logo.png"
+                  src={`${import.meta.env.BASE_URL}logo.png`}
                   alt="Logo"
                   className="h-full w-full object-contain rounded-full"
                 />

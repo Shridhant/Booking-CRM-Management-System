@@ -51,7 +51,7 @@ export default function RegisterPage() {
             to="/customer"
             className="mx-auto mb-4 h-12 w-12 rounded-lg overflow-hidden flex items-center justify-center shadow-vercel-sm bg-white border border-[#ebebeb]"
           >
-            <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Logo" className="h-10 w-10 object-contain" />
           </Link>
           <p className="mono-label mb-2">customer access</p>
           <h1 className="text-[32px] leading-10 font-semibold text-neutral-950">
