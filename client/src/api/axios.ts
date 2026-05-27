@@ -84,14 +84,14 @@ api.interceptors.response.use(
         } catch (refreshError) {
           processQueue(refreshError, null)
           useAuthStore.getState().logout()
-          window.location.href = "/login"
+          window.location.href = `${import.meta.env.BASE_URL}login`
           return Promise.reject(refreshError)
         } finally {
           isRefreshing = false
         }
       } else {
         useAuthStore.getState().logout()
-        window.location.href = "/login"
+        window.location.href = `${import.meta.env.BASE_URL}login`
       }
     }
 

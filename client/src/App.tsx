@@ -20,7 +20,7 @@ import AdminConsolePage from "./pages/dashboard/AdminConsolePage"
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
 
         {/* Public routes */}
