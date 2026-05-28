@@ -36,16 +36,18 @@ export const createBusinessSchema = z.object({
 
 export const updateBusinessSchema = z.object({
     name: z.string().min(2).optional(),
-    description: z.string().optional(),
-    phone: z.string().min(7).max(20).optional(),
-    email: z.string().email("Invalid email").optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
+    description: z.string().optional().nullable(),
+    phone: z.string().min(7).max(20).optional().nullable(),
+    email: z.string().email("Invalid email").optional().nullable(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    latitude: z.number().optional().nullable(),
+    longitude: z.number().optional().nullable(),
     booking_type: bookingTypeEnum.optional(),
     allow_employee_selection: z.boolean().optional(),
     auto_assign_strategy: autoAssignStrategyEnum.optional(),
+    logo_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
+    cover_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
 })
 
 export const updateBusinessSettingsSchema = z.object({

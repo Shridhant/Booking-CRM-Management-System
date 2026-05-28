@@ -23,6 +23,7 @@ export interface CreateEmployeeInput {
     name: string
     bio?: string
     experience_years?: number
+    profile_media_id?: string | null
     branch_ids: string[]  // at least one branch required
 }
 
@@ -30,6 +31,7 @@ export interface UpdateEmployeeInput {
     name?: string
     bio?: string
     experience_years?: number
+    profile_media_id?: string | null
     is_active?: boolean
 }
 

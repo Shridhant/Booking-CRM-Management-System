@@ -9,6 +9,7 @@ import {
   removeEmployeeBranchApi,
   deactivateEmployeeApi
 } from "../../api/employees.api"
+import { uploadMediaApi } from "../../api/media.api"
 import { listBranchesApi } from "../../api/branches.api"
 import { listBookingsApi } from "../../api/bookings.api"
 import {
@@ -33,8 +34,9 @@ import {
   Clock,
   Calendar,
   CalendarOff,
-
-  CalendarCheck
+  CalendarCheck,
+  Upload,
+  Camera
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import type { Employee } from "../../types"
@@ -58,6 +60,9 @@ export default function EmployeesPage() {
   const [bio, setBio] = useState("")
   const [experienceYears, setExperienceYears] = useState("0")
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]) // Checked branch IDs
+  const [profileMediaId, setProfileMediaId] = useState<string | null>(null)
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
   // Tab state for edit drawer
@@ -198,6 +203,7 @@ export default function EmployeesPage() {
       name: string
       bio?: string
       experience_years: number
+      profile_media_id?: string | null
       branch_ids: string[]
     }) => {
       if (!businessId) throw new Error("No business selected")
@@ -217,6 +223,7 @@ export default function EmployeesPage() {
       name: string
       bio?: string
       experience_years: number
+      profile_media_id?: string | null
       nextBranchIds: string[]
       currentBranches: { branch_id: string }[]
     }) => {
@@ -226,7 +233,8 @@ export default function EmployeesPage() {
       await updateEmployeeApi(businessId, data.id, {
         name: data.name,
         bio: data.bio || null,
-        experience_years: data.experience_years
+        experience_years: data.experience_years,
+        profile_media_id: data.profile_media_id
       })
 
       const currentIds = data.currentBranches.map((cb) => cb.branch_id)
@@ -320,6 +328,9 @@ export default function EmployeesPage() {
     setBio("")
     setExperienceYears("0")
     setSelectedBranches([])
+    setProfileMediaId(null)
+    setProfilePhotoUrl(null)
+    setUploadingImage(false)
     setFormError(null)
     setActiveEmployee(null)
     setActiveTab("profile")
@@ -348,6 +359,8 @@ export default function EmployeesPage() {
     setBio(emp.bio || "")
     setExperienceYears(emp.experience_years.toString())
     setSelectedBranches(emp.branches.map((b) => b.branch_id))
+    setProfileMediaId(emp.profile_media_id || null)
+    setProfilePhotoUrl(emp.profile_photo_url || null)
     setDrawerType("edit")
     setDrawerOpen(true)
   }
@@ -376,6 +389,7 @@ export default function EmployeesPage() {
       name: name.trim(),
       bio: bio.trim() || undefined,
       experience_years: expVal,
+      profile_media_id: profileMediaId,
       branch_ids: selectedBranches
     }
 
@@ -387,6 +401,7 @@ export default function EmployeesPage() {
         name: payload.name,
         bio: payload.bio,
         experience_years: payload.experience_years,
+        profile_media_id: profileMediaId,
         nextBranchIds: selectedBranches,
         currentBranches: activeEmployee.branches
       })
@@ -571,9 +586,17 @@ export default function EmployeesPage() {
                 <div>
                   {/* Photo & Profile info */}
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-md bg-gradient-to-br from-neutral-950 to-neutral-700 flex items-center justify-center text-white font-semibold text-sm shadow-vercel-md shrink-0 uppercase">
-                      {initials}
-                    </div>
+                    {emp.profile_photo_url ? (
+                      <img
+                        src={emp.profile_photo_url}
+                        alt={emp.name}
+                        className="h-12 w-12 rounded-md object-cover shadow-vercel-md shrink-0 border border-gray-100"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-gradient-to-br from-neutral-950 to-neutral-700 flex items-center justify-center text-white font-semibold text-sm shadow-vercel-md shrink-0 uppercase">
+                        {initials}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-gray-900 text-sm truncate">{emp.name}</h4>
@@ -762,6 +785,66 @@ export default function EmployeesPage() {
                         {formError}
                       </div>
                     )}
+
+                    {/* Profile Photo Upload */}
+                    <div className="flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg p-5 bg-gray-50/50">
+                      <label className="block text-sm font-semibold text-gray-700 mb-3 text-center w-full">
+                        Profile Avatar Photo
+                      </label>
+                      <div className="relative group">
+                        {profilePhotoUrl ? (
+                          <img
+                            src={profilePhotoUrl}
+                            alt="Preview"
+                            className="h-24 w-24 rounded-lg object-cover shadow-vercel-md border border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-24 w-24 rounded-lg bg-neutral-900 flex items-center justify-center text-white font-bold text-xl uppercase tracking-wider">
+                            {name ? name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : <Camera className="h-8 w-8 text-neutral-400" />}
+                          </div>
+                        )}
+
+                        {/* Image hover action overlay */}
+                        <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                          <label className="cursor-pointer text-white text-xs font-semibold flex flex-col items-center gap-1 w-full h-full justify-center">
+                            <Upload className="h-4.5 w-4.5" />
+                            <span>Change</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                try {
+                                  setUploadingImage(true)
+                                  setFormError(null)
+                                  const media = await uploadMediaApi(file, "employee_profiles")
+                                  setProfileMediaId(media.id)
+                                  setProfilePhotoUrl(media.url)
+                                } catch (err: any) {
+                                  console.error("Failed to upload image", err)
+                                  setFormError(err.message || "Failed to upload image. Please try again.")
+                                } finally {
+                                  setUploadingImage(false)
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                      {uploadingImage && (
+                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mt-3 animate-pulse">
+                          <Loader2 className="h-3 w-3 animate-spin text-neutral-900" />
+                          Uploading to Cloudinary...
+                        </div>
+                      )}
+                      {!uploadingImage && !profilePhotoUrl && (
+                        <p className="text-[10px] text-gray-400 mt-2 text-center">
+                          Recommend square WebP/JPEG, Max 10MB
+                        </p>
+                      )}
+                    </div>
 
                     {/* Name */}
                     <div>

@@ -37,6 +37,7 @@ export const createServiceSchema = z
       .max(480, "Duration cannot exceed 8 hours"),
     min_price: z.number().min(0, "Price cannot be negative"),
     max_price: z.number().min(0).optional(),
+    image_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
     employee_ids: z
       .array(z.string().uuid("Each employee_id must be a valid UUID"))
       .optional(),
@@ -59,6 +60,7 @@ export const updateServiceSchema = z
     duration_minutes: z.number().int().min(5).max(480).optional(),
     min_price: z.number().min(0).optional(),
     max_price: z.number().min(0).optional(),
+    image_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
     is_active: z.boolean().optional(),
   })
   .refine(

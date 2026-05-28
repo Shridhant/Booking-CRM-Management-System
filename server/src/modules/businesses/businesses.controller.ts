@@ -8,6 +8,9 @@ import {
     updateBusiness,
     getBusinessSettings,
     updateBusinessSettings,
+    getBusinessGallery,
+    addMediaToGallery,
+    removeMediaFromGallery,
 } from "./businesses.service"
 import {
     UpdateBusinessSchema,
@@ -77,6 +80,51 @@ export const updateBusinessSettingsController = asyncHandler(
 
         res.status(200).json(
             new ApiResponse(200, settings, "Settings updated successfully")
+        )
+    }
+)
+
+// GET /api/businesses/:businessId/gallery
+export const getBusinessGalleryController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const gallery = await getBusinessGallery(req.params.businessId as string)
+
+        res.status(200).json(
+            new ApiResponse(200, gallery, "Gallery fetched successfully")
+        )
+    }
+)
+
+// POST /api/businesses/:businessId/gallery
+export const addMediaToGalleryController = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { media_id, sort_order } = req.body
+        if (!media_id) {
+            throw new ApiError(400, "media_id is required")
+        }
+
+        const item = await addMediaToGallery(
+            req.params.businessId as string,
+            media_id,
+            sort_order ?? 0
+        )
+
+        res.status(201).json(
+            new ApiResponse(201, item, "Media added to gallery successfully")
+        )
+    }
+)
+
+// DELETE /api/businesses/:businessId/gallery/:galleryId
+export const removeMediaFromGalleryController = asyncHandler(
+    async (req: Request, res: Response) => {
+        await removeMediaFromGallery(
+            req.params.businessId as string,
+            req.params.galleryId as string
+        )
+
+        res.status(200).json(
+            new ApiResponse(200, null, "Media removed from gallery successfully")
         )
     }
 )

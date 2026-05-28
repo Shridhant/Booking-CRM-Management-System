@@ -6,6 +6,7 @@ import {
   listReviewsController,
   listServicesController,
   searchBusinessesController,
+  getPublicBusinessGalleryController,
 } from "./public.controller"
 
 const router = Router()
@@ -27,5 +28,8 @@ router.get("/businesses/:businessIdOrSlug/slots", getSlotsController)
 
 // GET /api/public/businesses/:businessIdOrSlug/reviews
 router.get("/businesses/:businessIdOrSlug/reviews", listReviewsController)
+
+// GET /api/public/businesses/:businessIdOrSlug/gallery
+router.get("/businesses/:businessIdOrSlug/gallery", getPublicBusinessGalleryController)
 
 export default router

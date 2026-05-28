@@ -22,6 +22,8 @@ export interface Service {
   updated_at: string
   // joined
   category_name?: string | null
+  image_media_id?: string | null
+  image_url?: string | null
   employees?: ServiceEmployee[]
 }
 
@@ -52,6 +54,7 @@ export interface CreateServiceInput {
   duration_minutes: number
   min_price: number
   max_price?: number
+  image_media_id?: string | null
   employee_ids?: string[]
 }
 
@@ -62,6 +65,7 @@ export interface UpdateServiceInput {
   duration_minutes?: number
   min_price?: number
   max_price?: number
+  image_media_id?: string | null
   is_active?: boolean
 }
 

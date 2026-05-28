@@ -166,6 +166,8 @@ export const updateBusiness = async (
         "booking_type",
         "allow_employee_selection",
         "auto_assign_strategy",
+        "logo_media_id",
+        "cover_media_id",
     ]
 
     for (const field of allowedFields) {
@@ -182,7 +184,7 @@ export const updateBusiness = async (
     fields.push(`updated_at = NOW()`)
     values.push(businessId)
 
-    const result = await db.query(
+    await db.query(
         `UPDATE businesses
      SET ${fields.join(", ")}
      WHERE id = $${idx}
@@ -190,7 +192,7 @@ export const updateBusiness = async (
         values
     )
 
-    return result.rows[0]
+    return getBusinessById(businessId)
 }
 
 // ─────────────────────────────────────────────
@@ -275,6 +277,59 @@ export const updateBusinessSettings = async (
     )
 
     return result.rows[0]
+}
+
+// ─────────────────────────────────────────────
+// Business Gallery Operations
+// ─────────────────────────────────────────────
+export const getBusinessGallery = async (businessId: string) => {
+    const result = await db.query(
+        `SELECT bg.id, bg.sort_order, m.id AS media_id, m.url, m.size, m.mime_type
+         FROM business_gallery bg
+         JOIN media m ON m.id = bg.media_id
+         WHERE bg.business_id = $1
+         ORDER BY bg.sort_order ASC, bg.created_at DESC`,
+        [businessId]
+    )
+    return result.rows
+}
+
+export const addMediaToGallery = async (businessId: string, mediaId: string, sortOrder = 0) => {
+    // Verify media exists
+    const media = await db.query(`SELECT id FROM media WHERE id = $1`, [mediaId])
+    if (!media.rows[0]) {
+        throw new ApiError(404, "Media not found")
+    }
+    
+    const result = await db.query(
+        `INSERT INTO business_gallery (business_id, media_id, sort_order)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [businessId, mediaId, sortOrder]
+    )
+    
+    // Return with joined media details
+    const fullRecord = await db.query(
+        `SELECT bg.id, bg.sort_order, m.id AS media_id, m.url, m.size, m.mime_type
+         FROM business_gallery bg
+         JOIN media m ON m.id = bg.media_id
+         WHERE bg.id = $1`,
+        [result.rows[0].id]
+    )
+    return fullRecord.rows[0]
+}
+
+export const removeMediaFromGallery = async (businessId: string, galleryId: string) => {
+    const result = await db.query(
+        `DELETE FROM business_gallery 
+         WHERE business_id = $1 AND id = $2
+         RETURNING id`,
+        [businessId, galleryId]
+    )
+    
+    if (result.rows.length === 0) {
+        throw new ApiError(404, "Gallery item not found")
+    }
 }
 
 

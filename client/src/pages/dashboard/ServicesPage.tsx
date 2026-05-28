@@ -12,6 +12,7 @@ import {
   deleteServiceApi,
   assignEmployeesToServiceApi
 } from "../../api/services.api"
+import { uploadMediaApi } from "../../api/media.api"
 import { listEmployeesApi } from "../../api/employees.api"
 import {
   Scissors,
@@ -25,7 +26,9 @@ import {
   X,
   User,
   Clock,
-  DollarSign
+  DollarSign,
+  Upload,
+  Camera
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import type { Service, ServiceCategory } from "../../types"
@@ -53,6 +56,9 @@ export default function ServicesPage() {
   const [serviceMaxPrice, setServiceMaxPrice] = useState<number | "">("")
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
   const [assignedEmployeeIds, setAssignedEmployeeIds] = useState<string[]>([])
+  const [serviceImageMediaId, setServiceImageMediaId] = useState<string | null>(null)
+  const [serviceImageUrl, setServiceImageUrl] = useState<string | null>(null)
+  const [uploadingServiceImage, setUploadingServiceImage] = useState(false)
 
   // Errors
   const [formError, setFormError] = useState<string | null>(null)
@@ -125,6 +131,7 @@ export default function ServicesPage() {
       min_price: number
       max_price?: number
       category_id?: string
+      image_media_id?: string | null
       employee_ids: string[]
     }) => {
       if (!businessId) throw new Error("No business ID")
@@ -135,6 +142,7 @@ export default function ServicesPage() {
         min_price: data.min_price,
         max_price: data.max_price,
         category_id: data.category_id || undefined,
+        image_media_id: data.image_media_id,
         employee_ids: data.employee_ids
       })
       return svc
@@ -157,6 +165,7 @@ export default function ServicesPage() {
       min_price: number
       max_price?: number
       category_id?: string | null
+      image_media_id?: string | null
       employee_ids: string[]
     }) => {
       if (!businessId) throw new Error("No business ID")
@@ -167,7 +176,8 @@ export default function ServicesPage() {
         duration_minutes: data.duration_minutes,
         min_price: data.min_price,
         max_price: data.max_price || null,
-        category_id: data.category_id || null
+        category_id: data.category_id || null,
+        image_media_id: data.image_media_id
       })
       // Update assigned employees specifically
       await assignEmployeesToServiceApi(businessId, data.id, data.employee_ids)
@@ -205,6 +215,9 @@ export default function ServicesPage() {
     setServiceMaxPrice("")
     setSelectedCategoryId("")
     setAssignedEmployeeIds([])
+    setServiceImageMediaId(null)
+    setServiceImageUrl(null)
+    setUploadingServiceImage(false)
     setFormError(null)
     setActiveCategory(null)
     setActiveService(null)
@@ -249,6 +262,8 @@ export default function ServicesPage() {
     setServiceMaxPrice(service.max_price ? Number(service.max_price) : "")
     setSelectedCategoryId(service.category_id || "uncategorized")
     setAssignedEmployeeIds(service.employees?.map((e) => e.employee_id) || [])
+    setServiceImageMediaId(service.image_media_id || null)
+    setServiceImageUrl(service.image_url || null)
     setDrawerType("edit_service")
     setDrawerOpen(true)
   }
@@ -278,6 +293,7 @@ export default function ServicesPage() {
         min_price: minPriceVal,
         max_price: serviceMaxPrice !== "" ? Number(serviceMaxPrice) : undefined,
         category_id: selectedCategoryId !== "uncategorized" ? selectedCategoryId : undefined,
+        image_media_id: serviceImageMediaId,
         employee_ids: assignedEmployeeIds
       })
     } else if (drawerType === "edit_service") {
@@ -296,6 +312,7 @@ export default function ServicesPage() {
         min_price: minPriceVal,
         max_price: serviceMaxPrice !== "" ? Number(serviceMaxPrice) : undefined,
         category_id: selectedCategoryId !== "uncategorized" ? selectedCategoryId : null,
+        image_media_id: serviceImageMediaId,
         employee_ids: assignedEmployeeIds
       })
     }
@@ -441,8 +458,15 @@ export default function ServicesPage() {
                               <div
                                 key={service.id}
                                 onClick={() => openEditService(service)}
-                                className="bg-white p-4.5 rounded-md border border-gray-100 shadow-vercel-sm hover:shadow-vercel-sm transition duration-150 flex items-start justify-between cursor-pointer group hover:border-neutral-200"
+                                className="bg-white p-4.5 rounded-md border border-gray-100 shadow-vercel-sm hover:shadow-vercel-sm transition duration-150 flex items-start gap-4 cursor-pointer group hover:border-neutral-200"
                               >
+                                {service.image_url && (
+                                  <img
+                                    src={service.image_url}
+                                    alt={service.name}
+                                    className="h-14 w-14 rounded-md object-cover border border-gray-100 shrink-0 shadow-vercel-sm"
+                                  />
+                                )}
                                 <div className="space-y-1.5 flex-1 pr-4">
                                   <div className="flex items-center gap-2">
                                     <h4 className="font-semibold text-gray-800 text-sm group-hover:text-neutral-950 transition">
@@ -528,8 +552,15 @@ export default function ServicesPage() {
                     <div
                       key={service.id}
                       onClick={() => openEditService(service)}
-                      className="bg-white p-4.5 rounded-md border border-gray-100 shadow-vercel-sm hover:shadow-vercel-sm hover:border-neutral-200 cursor-pointer group flex items-start justify-between transition"
+                      className="bg-white p-4.5 rounded-md border border-gray-100 shadow-vercel-sm hover:shadow-vercel-sm hover:border-neutral-200 cursor-pointer group flex items-start gap-4 transition"
                     >
+                      {service.image_url && (
+                        <img
+                          src={service.image_url}
+                          alt={service.name}
+                          className="h-14 w-14 rounded-md object-cover border border-gray-100 shrink-0 shadow-vercel-sm"
+                        />
+                      )}
                       <div className="space-y-1.5 flex-1 pr-4">
                         <h4 className="font-semibold text-gray-800 text-sm group-hover:text-neutral-950 transition">
                           {service.name}
@@ -636,6 +667,66 @@ export default function ServicesPage() {
                 {/* ── Service Fields ───────────────────────────────── */}
                 {(drawerType === "add_service" || drawerType === "edit_service") && (
                   <div className="space-y-5">
+                    {/* Service Image Upload */}
+                    <div className="flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg p-5 bg-gray-50/50 mb-3">
+                      <label className="block text-sm font-semibold text-gray-700 mb-3 text-center w-full">
+                        Service Cover Image
+                      </label>
+                      <div className="relative group">
+                        {serviceImageUrl ? (
+                          <img
+                            src={serviceImageUrl}
+                            alt="Preview"
+                            className="h-32 w-48 rounded-lg object-cover shadow-vercel-md border border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-32 w-48 rounded-lg bg-neutral-900 flex items-center justify-center text-white font-bold text-xl uppercase tracking-wider">
+                            <Camera className="h-8 w-8 text-neutral-400" />
+                          </div>
+                        )}
+
+                        {/* Image hover action overlay */}
+                        <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                          <label className="cursor-pointer text-white text-xs font-semibold flex flex-col items-center gap-1 w-full h-full justify-center">
+                            <Upload className="h-4.5 w-4.5" />
+                            <span>Change Cover</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (!file) return
+                                try {
+                                  setUploadingServiceImage(true)
+                                  setFormError(null)
+                                  const media = await uploadMediaApi(file, "services")
+                                  setServiceImageMediaId(media.id)
+                                  setServiceImageUrl(media.url)
+                                } catch (err: any) {
+                                  console.error("Failed to upload image", err)
+                                  setFormError(err.message || "Failed to upload image. Please try again.")
+                                } finally {
+                                  setUploadingServiceImage(false)
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                      {uploadingServiceImage && (
+                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 mt-3 animate-pulse">
+                          <Loader2 className="h-3 w-3 animate-spin text-neutral-900" />
+                          Uploading to Cloudinary...
+                        </div>
+                      )}
+                      {!uploadingServiceImage && !serviceImageUrl && (
+                        <p className="text-[10px] text-gray-400 mt-2 text-center">
+                          Recommend landscape (16:10 or 16:9), Max 10MB
+                        </p>
+                      )}
+                    </div>
+
                     {/* Name */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">

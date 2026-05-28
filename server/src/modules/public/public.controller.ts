@@ -10,6 +10,7 @@ import {
   listPublicReviews,
   listPublicServices,
   searchPublicBusinesses,
+  getPublicBusinessGallery,
 } from "./public.service"
 import {
   publicBusinessSearchQuerySchema,
@@ -100,6 +101,16 @@ export const listReviewsController = asyncHandler(
 
     res.status(200).json(
       new ApiResponse(200, reviews, "Reviews fetched successfully")
+    )
+  }
+)
+
+export const getPublicBusinessGalleryController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const gallery = await getPublicBusinessGallery(req.params.businessIdOrSlug as string)
+
+    res.status(200).json(
+      new ApiResponse(200, gallery, "Gallery fetched successfully")
     )
   }
 )

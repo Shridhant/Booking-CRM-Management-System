@@ -26,7 +26,9 @@ import {
   ArrowRight,
   Globe,
   UserCheck,
-  UserMinus
+  UserMinus,
+  Upload,
+  Camera
 } from "lucide-react"
 
 import {
@@ -39,6 +41,7 @@ import {
 } from "../../api/admin.api"
 import type { AdminUser } from "../../api/admin.api"
 import { onboardBusinessApi } from "../../api/auth.api"
+import { uploadMediaApi } from "../../api/media.api"
 import type { Business } from "../../types"
 
 // Onboarding Validation Schema
@@ -85,6 +88,15 @@ export default function AdminConsolePage() {
   // Edit Drawer state
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [editingBusiness, setEditingBusiness] = useState<any | null>(null)
+  
+  // Logo & Cover upload states
+  const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+
+  const [coverMediaId, setCoverMediaId] = useState<string | null>(null)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
   
   // Onboard Success state
   const [onboardSuccessData, setOnboardSuccessData] = useState<any | null>(null)
@@ -199,6 +211,12 @@ export default function AdminConsolePage() {
     setEditValue("booking_type", business.booking_type || "free_booking")
     setEditValue("allow_employee_selection", business.allow_employee_selection !== false)
     setEditValue("auto_assign_strategy", business.auto_assign_strategy || "manual")
+    setLogoMediaId(business.logo_media_id || null)
+    setLogoUrl(business.logo_url || null)
+    setCoverMediaId(business.cover_media_id || null)
+    setCoverUrl(business.cover_url || null)
+    setUploadingLogo(false)
+    setUploadingCover(false)
     setIsEditDrawerOpen(true)
   }
 
@@ -206,7 +224,11 @@ export default function AdminConsolePage() {
     if (!editingBusiness) return
     updateBusinessMutation.mutate({
       id: editingBusiness.id,
-      data
+      data: {
+        ...data,
+        logo_media_id: logoMediaId,
+        cover_media_id: coverMediaId
+      }
     })
   }
 
@@ -969,6 +991,97 @@ Admin Password: ${onboardSuccessData.plain_password}`
 
                 {/* Edit Form */}
                 <form onSubmit={handleEditSubmit(onEditSubmit)} className="space-y-5 text-xs">
+                  {/* Business Branding (Logo & Cover) */}
+                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-lg border border-gray-100 mb-4">
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                      Workspace Branding
+                    </span>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Logo Upload (1:1) */}
+                      <div className="flex flex-col items-center">
+                        <span className="block text-[9px] font-semibold text-neutral-500 mb-2 uppercase">Logo Avatar</span>
+                        <div className="relative group">
+                          {logoUrl ? (
+                            <img src={logoUrl} alt="Logo" className="h-16 w-16 rounded-full object-cover border border-gray-200 shadow-vercel-sm" />
+                          ) : (
+                            <div className="h-16 w-16 rounded-full bg-neutral-900 text-white font-bold flex items-center justify-center uppercase text-sm">
+                              {editingBusiness.name ? editingBusiness.name.substring(0,2) : <Building className="h-5 w-5" />}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                            <label className="cursor-pointer text-white text-[9px] font-semibold flex flex-col items-center gap-0.5 w-full h-full justify-center">
+                              <Upload className="h-3 w-3" />
+                              <span>Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  try {
+                                    setUploadingLogo(true)
+                                    const media = await uploadMediaApi(file, "business_logos")
+                                    setLogoMediaId(media.id)
+                                    setLogoUrl(media.url)
+                                  } catch (err: any) {
+                                    console.error(err)
+                                    alert("Logo upload failed.")
+                                  } finally {
+                                    setUploadingLogo(false)
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        {uploadingLogo && <span className="text-[9px] text-neutral-400 mt-1 animate-pulse">Uploading...</span>}
+                      </div>
+
+                      {/* Cover Upload (16:9) */}
+                      <div className="flex flex-col items-center">
+                        <span className="block text-[9px] font-semibold text-neutral-500 mb-2 uppercase">Cover Banner</span>
+                        <div className="relative group">
+                          {coverUrl ? (
+                            <img src={coverUrl} alt="Cover" className="h-16 w-28 rounded-md object-cover border border-gray-200 shadow-vercel-sm" />
+                          ) : (
+                            <div className="h-16 w-28 rounded-md bg-neutral-900 text-white font-bold flex items-center justify-center uppercase text-xs">
+                              <Camera className="h-4 w-4 text-neutral-400" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 rounded-md opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                            <label className="cursor-pointer text-white text-[9px] font-semibold flex flex-col items-center gap-0.5 w-full h-full justify-center">
+                              <Upload className="h-3 w-3" />
+                              <span>Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  try {
+                                    setUploadingCover(true)
+                                    const media = await uploadMediaApi(file, "business_covers")
+                                    setCoverMediaId(media.id)
+                                    setCoverUrl(media.url)
+                                  } catch (err: any) {
+                                    console.error(err)
+                                    alert("Cover upload failed.")
+                                  } finally {
+                                    setUploadingCover(false)
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        {uploadingCover && <span className="text-[9px] text-neutral-400 mt-1 animate-pulse">Uploading...</span>}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Name */}
                   <div>
                     <label className="block text-[10px] font-bold text-neutral-700 mb-1.5 uppercase">

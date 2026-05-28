@@ -5,6 +5,9 @@ export interface User {
   email: string
   role: "super_admin" | "business_admin" | "employee" | "customer"
   name?: string
+  phone?: string | null
+  profile_photo_url?: string | null
+  profile_media_id?: string | null
 }
 
 export interface TokenPair {
@@ -30,6 +33,8 @@ export interface Business {
   auto_assign_strategy: string
   logo_url: string | null
   cover_url: string | null
+  logo_media_id?: string | null
+  cover_media_id?: string | null
   created_at: string
 }
 
@@ -81,6 +86,7 @@ export interface Employee {
   bio: string | null
   experience_years: number
   is_active: boolean
+  profile_media_id: string | null
   profile_photo_url: string | null
   branches: EmployeeBranch[]
   created_at: string
@@ -121,6 +127,8 @@ export interface Service {
   min_price: number
   max_price: number | null
   is_active: boolean
+  image_url: string | null
+  image_media_id?: string | null
   employees: ServiceEmployee[]
 }
 

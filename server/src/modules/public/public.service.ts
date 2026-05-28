@@ -285,3 +285,16 @@ export const listPublicReviews = async (
     total_pages: Math.ceil(total / query.limit),
   }
 }
+
+export const getPublicBusinessGallery = async (businessIdOrSlug: string) => {
+  const business = await resolveBusiness(businessIdOrSlug)
+  const result = await db.query(
+    `SELECT bg.id, bg.sort_order, m.id AS media_id, m.url
+     FROM business_gallery bg
+     JOIN media m ON m.id = bg.media_id
+     WHERE bg.business_id = $1
+     ORDER BY bg.sort_order ASC, bg.created_at DESC`,
+    [business.id]
+  )
+  return result.rows
+}

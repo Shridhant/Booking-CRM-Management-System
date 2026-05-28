@@ -14,11 +14,13 @@ import {
   Search,
   Share2,
   Star,
-  Users
+  Users,
+  X
 } from "lucide-react"
 import { motion } from "motion/react"
 import heroFallback from "../../assets/hero.png"
 import { createCustomerBookingApi } from "../../api/customer.api"
+import { getPublicGalleryApi } from "../../api/gallery.api"
 import {
   getPublicBusinessApi,
   getPublicSlotsApi,
@@ -94,6 +96,14 @@ export default function CustomerBusinessPage() {
     queryFn: () => listPublicReviewsApi(businessIdOrSlug, { limit: 32 }),
     enabled: Boolean(businessIdOrSlug)
   })
+
+  const { data: gallery = [] } = useQuery({
+    queryKey: ["public-gallery", businessIdOrSlug],
+    queryFn: () => getPublicGalleryApi(businessIdOrSlug),
+    enabled: Boolean(businessIdOrSlug)
+  })
+
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const { data: nearbyBusinessesData } = useQuery({
     queryKey: ["public-nearby", business?.id, business?.city, business?.business_type],
@@ -394,6 +404,35 @@ export default function CustomerBusinessPage() {
                 </p>
               </div>
             </div>
+
+            {/* Showcase Gallery Portfolio */}
+            {gallery && gallery.length > 0 && (
+              <div className="mt-6 border-t border-[#f0e3e8] pt-5">
+                <h3 className="text-base font-semibold tracking-[-0.28px] text-[#1c181a] mb-3">
+                  Workspace Portfolio
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {gallery.map((photo) => (
+                    <div 
+                      key={photo.id}
+                      onClick={() => setLightboxUrl(photo.url)}
+                      className="aspect-[4/3] rounded-xl overflow-hidden border border-[#f0e3e8] bg-[#fdfafb] cursor-pointer group relative shadow-[0_4px_12px_-6px_rgba(0,0,0,0.06)]"
+                    >
+                      <img 
+                        src={photo.url} 
+                        alt="Workspace showcase" 
+                        className="h-full w-full object-cover group-hover:scale-106 transition duration-500 ease-out" 
+                      />
+                      <div className="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
+                        <span className="text-[10px] text-white font-semibold bg-neutral-950/65 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                          Expand View
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <section id="services" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
@@ -758,6 +797,27 @@ export default function CustomerBusinessPage() {
 
         </aside>
       </div>
+
+      {/* Fullscreen Lightbox Preview Overlay */}
+      {lightboxUrl && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition duration-300 animate-fade-in"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button 
+            type="button"
+            className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 cursor-pointer bg-white/10 hover:bg-white/20 rounded-full transition"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img 
+            src={lightboxUrl} 
+            alt="Workspace Portfolio Showcase Preview" 
+            className="max-w-full max-h-[95vh] object-contain rounded-xl shadow-2xl transition duration-500 scale-98 sm:scale-100" 
+          />
+        </div>
+      )}
     </div>
   )
 }

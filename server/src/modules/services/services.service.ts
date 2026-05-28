@@ -106,9 +106,13 @@ export const listCategoriesWithServices = async (
   const servicesResult = await db.query(
     `SELECT
       s.*,
-      sc.name AS category_name
+      sc.name AS category_name,
+      m.url AS image_url,
+      m.id AS image_media_id
     FROM services s
     LEFT JOIN service_categories sc ON sc.id = s.category_id
+    LEFT JOIN service_media sm ON sm.service_id = s.id
+    LEFT JOIN media m ON m.id = sm.media_id
     WHERE s.business_id = $1
     ORDER BY sc.sort_order ASC, s.name ASC`,
     [businessId]
@@ -311,10 +315,19 @@ export const createService = async (
       }
     }
 
+    // Assign service media if provided
+    if (input.image_media_id) {
+      await client.query(
+        `INSERT INTO service_media (service_id, media_id)
+         VALUES ($1, $2)`,
+        [service.id, input.image_media_id]
+      )
+    }
+
     await client.query("COMMIT")
 
-    const employees = await getServiceEmployees(service.id)
-    return { ...service, employees }
+    const fullService = await getServiceById(businessId, service.id)
+    return fullService
   } catch (err) {
     await client.query("ROLLBACK")
     throw err
@@ -344,9 +357,13 @@ export const listServices = async (
   const result = await db.query(
     `SELECT
       s.*,
-      sc.name AS category_name
+      sc.name AS category_name,
+      m.url AS image_url,
+      m.id AS image_media_id
     FROM services s
     LEFT JOIN service_categories sc ON sc.id = s.category_id
+    LEFT JOIN service_media sm ON sm.service_id = s.id
+    LEFT JOIN media m ON m.id = sm.media_id
     WHERE ${conditions.join(" AND ")}
     ORDER BY sc.sort_order ASC, s.name ASC`,
     params
@@ -369,9 +386,13 @@ export const getServiceById = async (
   const result = await db.query(
     `SELECT
       s.*,
-      sc.name AS category_name
+      sc.name AS category_name,
+      m.url AS image_url,
+      m.id AS image_media_id
     FROM services s
     LEFT JOIN service_categories sc ON sc.id = s.category_id
+    LEFT JOIN service_media sm ON sm.service_id = s.id
+    LEFT JOIN media m ON m.id = sm.media_id
     WHERE s.id = $1 AND s.business_id = $2`,
     [serviceId, businessId]
   )
@@ -433,17 +454,41 @@ export const updateService = async (
     }
   }
 
-  if (fields.length === 0) {
-    throw new ApiError(400, "No fields provided to update")
+  const client = await db.connect()
+  try {
+    await client.query("BEGIN")
+
+    if (fields.length > 0) {
+      fields.push(`updated_at = NOW()`)
+      values.push(serviceId)
+      await client.query(
+        `UPDATE services SET ${fields.join(", ")} WHERE id = $${idx}`,
+        values
+      )
+    }
+
+    // Update service media link if provided
+    if (input.image_media_id !== undefined) {
+      await client.query(
+        `DELETE FROM service_media WHERE service_id = $1`,
+        [serviceId]
+      )
+      if (input.image_media_id) {
+        await client.query(
+          `INSERT INTO service_media (service_id, media_id)
+           VALUES ($1, $2)`,
+          [serviceId, input.image_media_id]
+        )
+      }
+    }
+
+    await client.query("COMMIT")
+  } catch (err) {
+    await client.query("ROLLBACK")
+    throw err
+  } finally {
+    client.release()
   }
-
-  fields.push(`updated_at = NOW()`)
-  values.push(serviceId)
-
-  await db.query(
-    `UPDATE services SET ${fields.join(", ")} WHERE id = $${idx}`,
-    values
-  )
 
   return getServiceById(businessId, serviceId)
 }

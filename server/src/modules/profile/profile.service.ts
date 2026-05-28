@@ -44,16 +44,23 @@ export const updateProfile = async (
     }
 
     if (input.phone !== undefined) {
-        // Check phone not taken by another user
-        const existing = await db.query(
-            `SELECT id FROM users WHERE phone = $1 AND id != $2`,
-            [input.phone, userId]
-        )
-        if (existing.rows.length > 0) {
-            throw new ApiError(409, "Phone number is already in use")
+        if (input.phone !== null) {
+            // Check phone not taken by another user
+            const existing = await db.query(
+                `SELECT id FROM users WHERE phone = $1 AND id != $2`,
+                [input.phone, userId]
+            )
+            if (existing.rows.length > 0) {
+                throw new ApiError(409, "Phone number is already in use")
+            }
         }
         fields.push(`phone = $${idx++}`)
         values.push(input.phone)
+    }
+
+    if (input.profile_media_id !== undefined) {
+        fields.push(`profile_media_id = $${idx++}`)
+        values.push(input.profile_media_id)
     }
 
     if (fields.length === 0) {
@@ -63,13 +70,12 @@ export const updateProfile = async (
     fields.push(`updated_at = NOW()`)
     values.push(userId)
 
-    const result = await db.query(
+    await db.query(
         `UPDATE users
      SET ${fields.join(", ")}
-     WHERE id = $${idx}
-     RETURNING id, name, email, phone, role, profile_media_id, is_active, created_at, updated_at`,
+     WHERE id = $${idx}`,
         values
     )
 
-    return result.rows[0]
+    return getMe(userId)
 }

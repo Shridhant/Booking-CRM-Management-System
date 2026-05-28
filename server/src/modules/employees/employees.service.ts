@@ -112,14 +112,15 @@ export const createEmployee = async (
 
         // Create the employee record
         const empResult = await client.query(
-            `INSERT INTO employees (business_id, name, bio, experience_years)
-       VALUES ($1, $2, $3, $4)
+            `INSERT INTO employees (business_id, name, bio, experience_years, profile_media_id)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
             [
                 businessId,
                 input.name,
                 input.bio ?? null,
                 input.experience_years ?? 0,
+                input.profile_media_id ?? null,
             ]
         )
 
@@ -251,6 +252,7 @@ export const updateEmployee = async (
         "name",
         "bio",
         "experience_years",
+        "profile_media_id",
         "is_active",
     ]
 

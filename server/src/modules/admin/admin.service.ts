@@ -140,6 +140,8 @@ export const updateAnyBusiness = async (
         booking_type: string
         allow_employee_selection: boolean
         auto_assign_strategy: string
+        logo_media_id: string | null
+        cover_media_id: string | null
     }>
 ) => {
     const existing = await db.query(
@@ -166,6 +168,8 @@ export const updateAnyBusiness = async (
         "booking_type",
         "allow_employee_selection",
         "auto_assign_strategy",
+        "logo_media_id",
+        "cover_media_id",
     ] as const
 
     for (const field of allowedFields) {
@@ -182,7 +186,7 @@ export const updateAnyBusiness = async (
     fields.push(`updated_at = NOW()`)
     values.push(businessId)
 
-    const result = await db.query(
+    await db.query(
         `UPDATE businesses
      SET ${fields.join(", ")}
      WHERE id = $${idx}
@@ -190,7 +194,7 @@ export const updateAnyBusiness = async (
         values
     )
 
-    return result.rows[0]
+    return getAnyBusiness(businessId)
 }
 
 // ─────────────────────────────────────────────

@@ -11,6 +11,7 @@ interface AuthState {
   isAuthenticated: boolean
   login: (accessToken: string, refreshToken: string) => void
   logout: () => void
+  setUser: (user: User | null) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -40,6 +41,8 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         })
       },
+
+      setUser: (user) => set({ user }),
     }),
     {
       name: "bookingapp-auth", // localStorage key

@@ -21,7 +21,7 @@ export const getEmployeeByIdApi = async (
 
 export const createEmployeeApi = async (
   businessId: string,
-  data: { name: string; bio?: string; experience_years?: number; branch_ids: string[] }
+  data: { name: string; bio?: string; experience_years?: number; profile_media_id?: string | null; branch_ids: string[] }
 ): Promise<Employee> => {
   const res = await api.post(`/businesses/${businessId}/employees`, data)
   return res.data.data

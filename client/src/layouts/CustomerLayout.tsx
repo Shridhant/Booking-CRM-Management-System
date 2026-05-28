@@ -1,10 +1,13 @@
+import { useState } from "react"
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom"
 import { CalendarCheck, LogIn, LogOut, Search, UserPlus } from "lucide-react"
 import { useAuthStore } from "../store/auth.store"
+import SettingsModal from "../components/common/SettingsModal"
 
 export default function CustomerLayout() {
   const navigate = useNavigate()
   const { isAuthenticated, user, logout } = useAuthStore()
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -66,6 +69,23 @@ export default function CustomerLayout() {
                     <span className="hidden sm:inline">Bookings</span>
                   </NavLink>
                   <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-2 py-1 text-sm font-medium text-neutral-600 hover:bg-white hover:text-neutral-950 transition cursor-pointer"
+                  >
+                    {user?.profile_photo_url ? (
+                      <img 
+                        src={user.profile_photo_url} 
+                        alt="Profile" 
+                        className="h-7 w-7 rounded-full object-cover border border-neutral-200/80 shadow-vercel-sm" 
+                      />
+                    ) : (
+                      <div className="h-7 w-7 rounded-full bg-neutral-950 text-white flex items-center justify-center font-bold text-xs uppercase shadow-vercel-sm">
+                        {user?.name ? user.name.substring(0,2) : "C"}
+                      </div>
+                    )}
+                    <span className="hidden sm:inline pr-1">{user?.name || "Profile"}</span>
+                  </button>
+                  <button
                     onClick={handleLogout}
                     className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-white"
                   >
@@ -99,6 +119,11 @@ export default function CustomerLayout() {
           <Outlet />
         </main>
       </div>
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   )
 }

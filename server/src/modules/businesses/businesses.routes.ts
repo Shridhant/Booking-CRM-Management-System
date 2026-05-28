@@ -5,6 +5,9 @@ import {
     updateBusinessController,
     getBusinessSettingsController,
     updateBusinessSettingsController,
+    getBusinessGalleryController,
+    addMediaToGalleryController,
+    removeMediaFromGalleryController,
 } from "./businesses.controller"
 import { authenticate } from "../../middleware/auth.middleware"
 import { authorize } from "../../middleware/role.middleware"
@@ -50,6 +53,27 @@ router.patch(
     authorize("business_admin", "super_admin"),
     validate(updateBusinessSettingsSchema),
     updateBusinessSettingsController
+)
+
+// GET /api/businesses/:businessId/gallery
+router.get(
+    "/:businessId/gallery",
+    authorize("business_admin", "super_admin"),
+    getBusinessGalleryController
+)
+
+// POST /api/businesses/:businessId/gallery
+router.post(
+    "/:businessId/gallery",
+    authorize("business_admin", "super_admin"),
+    addMediaToGalleryController
+)
+
+// DELETE /api/businesses/:businessId/gallery/:galleryId
+router.delete(
+    "/:businessId/gallery/:galleryId",
+    authorize("business_admin", "super_admin"),
+    removeMediaFromGalleryController
 )
 
 export default router

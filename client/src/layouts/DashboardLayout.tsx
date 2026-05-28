@@ -19,6 +19,7 @@ import {
   MapPin,
   Shield
 } from "lucide-react"
+import SettingsModal from "../components/common/SettingsModal"
 
 
 
@@ -36,6 +37,7 @@ export default function DashboardLayout() {
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Fetch business if not selected yet
   useEffect(() => {
@@ -143,12 +145,23 @@ export default function DashboardLayout() {
 
         {/* User Card & Logout */}
         <div className="p-4 border-t border-[#ebebeb] bg-[#fafafa]">
-          <div className="flex items-center gap-3 px-2 py-1.5 mb-2">
-            <div className="h-9 w-9 rounded-full bg-neutral-950 flex items-center justify-center text-white font-semibold text-sm uppercase shadow-vercel-sm">
-              {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || "AD"}
-            </div>
+          <div 
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-3 px-2 py-1.5 mb-2 hover:bg-neutral-200/50 rounded-lg cursor-pointer transition duration-150 group"
+          >
+            {user?.profile_photo_url ? (
+              <img 
+                src={user.profile_photo_url} 
+                alt="Profile" 
+                className="h-9 w-9 rounded-full object-cover shadow-vercel-sm border border-neutral-200/80 group-hover:border-neutral-400/80 transition"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-neutral-950 flex items-center justify-center text-white font-semibold text-sm uppercase shadow-vercel-sm group-hover:bg-neutral-800 transition">
+                {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || "AD"}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-neutral-950 transition font-medium">
                 {user?.name || "Administrator"}
               </p>
               <p className="text-xs text-gray-500 truncate capitalize">
@@ -223,15 +236,29 @@ export default function DashboardLayout() {
 
             {/* Footer user profile */}
             <div className="p-4 border-t border-[#ebebeb] bg-[#fafafa]">
-              <div className="flex items-center gap-3 px-2 py-1.5 mb-2">
-                <div className="h-9 w-9 rounded-full bg-neutral-950 flex items-center justify-center text-white font-semibold text-sm uppercase shadow-vercel-sm">
-                  {user?.name?.substring(0, 2) || "AD"}
-                </div>
+              <div 
+                onClick={() => {
+                  setIsSettingsOpen(true)
+                  setIsMobileSidebarOpen(false)
+                }}
+                className="flex items-center gap-3 px-2 py-1.5 mb-2 hover:bg-neutral-200/50 rounded-lg cursor-pointer transition duration-150 group"
+              >
+                {user?.profile_photo_url ? (
+                  <img 
+                    src={user.profile_photo_url} 
+                    alt="Profile" 
+                    className="h-9 w-9 rounded-full object-cover shadow-vercel-sm border border-neutral-200/80 group-hover:border-neutral-400/80 transition"
+                  />
+                ) : (
+                  <div className="h-9 w-9 rounded-full bg-neutral-950 flex items-center justify-center text-white font-semibold text-sm uppercase shadow-vercel-sm group-hover:bg-neutral-800 transition">
+                    {user?.name?.substring(0, 2) || "AD"}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
+                  <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-neutral-950 transition font-medium">
                     {user?.name || "Admin User"}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                  <p className="text-xs text-gray-500 capitalize truncate">{user?.role?.replace("_", " ")}</p>
                 </div>
               </div>
               <button
@@ -324,6 +351,11 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   )
 }

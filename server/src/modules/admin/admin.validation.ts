@@ -24,11 +24,11 @@ export const onboardBusinessSchema = z.object({
 
 export const updateAnyBusinessSchema = z.object({
     name: z.string().min(2).optional(),
-    description: z.string().optional(),
-    phone: z.string().min(7).max(20).optional(),
-    email: z.string().email().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
+    description: z.string().optional().nullable(),
+    phone: z.string().min(7).max(20).optional().nullable(),
+    email: z.string().email().optional().nullable(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
     is_verified: z.boolean().optional(),
     booking_type: z
         .enum(["free_booking", "pay_online_required", "partial_advance"])
@@ -37,6 +37,8 @@ export const updateAnyBusinessSchema = z.object({
     auto_assign_strategy: z
         .enum(["manual", "least_busy", "round_robin", "random"])
         .optional(),
+    logo_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
+    cover_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
 })
 
 export type OnboardBusinessSchema = z.infer<typeof onboardBusinessSchema>

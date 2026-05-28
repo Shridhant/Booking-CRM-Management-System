@@ -56,6 +56,7 @@ export const createServiceApi = async (
     duration_minutes: number
     min_price: number
     max_price?: number
+    image_media_id?: string | null
     employee_ids?: string[]
   }
 ): Promise<Service> => {

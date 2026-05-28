@@ -57,14 +57,16 @@ export interface CreateBusinessInput {
 
 export interface UpdateBusinessInput {
     name?: string | undefined
-    description?: string | undefined
-    phone?: string | undefined
-    email?: string | undefined
-    address?: string | undefined
-    city?: string | undefined
-    latitude?: number | undefined
-    longitude?: number | undefined
+    description?: string | null | undefined
+    phone?: string | null | undefined
+    email?: string | null | undefined
+    address?: string | null | undefined
+    city?: string | null | undefined
+    latitude?: number | null | undefined
+    longitude?: number | null | undefined
     booking_type?: BookingType | undefined
     allow_employee_selection?: boolean | undefined
     auto_assign_strategy?: AutoAssignStrategy | undefined
+    logo_media_id?: string | null | undefined
+    cover_media_id?: string | null | undefined
 }
