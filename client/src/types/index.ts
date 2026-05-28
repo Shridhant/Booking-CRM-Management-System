@@ -71,6 +71,8 @@ export interface Branch {
   name: string
   address: string | null
   city: string | null
+  latitude: number | null
+  longitude: number | null
   opening_time: string | null
   closing_time: string | null
   phone: string | null

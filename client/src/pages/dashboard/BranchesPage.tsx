@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "motion/react"
 import { formatTime } from "../../lib/date"
 import type { Branch } from "../../types"
 import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+import InteractiveMapPicker from "../../components/common/InteractiveMapPicker"
 
 
 export default function BranchesPage() {
@@ -42,6 +43,9 @@ export default function BranchesPage() {
   const [phone, setPhone] = useState("")
   const [openingTime, setOpeningTime] = useState("10:00")
   const [closingTime, setClosingTime] = useState("18:00")
+  const [latitude, setLatitude] = useState("")
+  const [longitude, setLongitude] = useState("")
+  const [locateOnMap, setLocateOnMap] = useState(true)
 
   // Errors
   const [formError, setFormError] = useState<string | null>(null)
@@ -119,6 +123,9 @@ export default function BranchesPage() {
     setPhone("")
     setOpeningTime("10:00")
     setClosingTime("18:00")
+    setLatitude("")
+    setLongitude("")
+    setLocateOnMap(true)
     setFormError(null)
     setActiveBranch(null)
   }
@@ -138,6 +145,8 @@ export default function BranchesPage() {
     setPhone(b.phone || "")
     setOpeningTime(b.opening_time?.substring(0, 5) || "10:00")
     setClosingTime(b.closing_time?.substring(0, 5) || "18:00")
+    setLatitude(b.latitude !== null && b.latitude !== undefined ? String(b.latitude) : "")
+    setLongitude(b.longitude !== null && b.longitude !== undefined ? String(b.longitude) : "")
     setDrawerType("edit")
     setDrawerOpen(true)
   }
@@ -148,11 +157,23 @@ export default function BranchesPage() {
 
     if (!name.trim()) return setFormError("Branch name is required")
 
+    const latNum = latitude.trim() ? Number(latitude) : null
+    const lngNum = longitude.trim() ? Number(longitude) : null
+
+    if (latitude.trim() && isNaN(latNum!)) {
+      return setFormError("Latitude must be a valid number (e.g. 28.5244)")
+    }
+    if (longitude.trim() && isNaN(lngNum!)) {
+      return setFormError("Longitude must be a valid number (e.g. 77.2066)")
+    }
+
     const payload = {
       name,
       address: address.trim() || null,
       city: city.trim() || null,
       phone: phone.trim() || null,
+      latitude: latNum,
+      longitude: lngNum,
       opening_time: openingTime || null,
       closing_time: closingTime || null
     }
@@ -366,48 +387,133 @@ export default function BranchesPage() {
                   />
                 </div>
 
-                {/* Address */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address</label>
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. 12A Connaught Place"
-                    className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
-                    disabled={isSubmitting}
-                  />
+                {/* Mode Selector Toggle */}
+                <div className="flex items-center justify-between p-3.5 rounded-lg border border-gray-100 bg-gray-50/50">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Geographical Map Picker</p>
+                    <p className="text-[10px] text-gray-400">Search location and pin it directly on a map</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLocateOnMap(!locateOnMap)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none
+                      ${locateOnMap ? "bg-neutral-950" : "bg-gray-200"}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out
+                        ${locateOnMap ? "translate-x-5" : "translate-x-0"}`}
+                    />
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* City */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">City</label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="e.g. New Delhi"
-                      className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
-                      disabled={isSubmitting}
+                {/* Conditional Fields based on locateOnMap mode */}
+                {locateOnMap ? (
+                  <>
+                    <InteractiveMapPicker
+                      initialLatitude={activeBranch?.latitude}
+                      initialLongitude={activeBranch?.longitude}
+                      initialAddress={address}
+                      initialCity={city}
+                      onChange={({ address: a, city: c, latitude: lat, longitude: lng }) => {
+                        setAddress(a)
+                        setCity(c)
+                        setLatitude(String(lat))
+                        setLongitude(String(lng))
+                      }}
                     />
-                  </div>
 
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                      Phone Number
-                    </label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="e.g. +91 9810000000"
-                      className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
+                    {/* Phone (Always visible) */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="e.g. +91 9810000000"
+                        className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Address */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address</label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="e.g. 12A Connaught Place"
+                        className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* City */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">City</label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          placeholder="e.g. New Delhi"
+                          className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Phone Number
+                        </label>
+                        <input
+                          type="text"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="e.g. +91 9810000000"
+                          className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Geographical Coordinates */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Latitude
+                        </label>
+                        <input
+                          type="text"
+                          value={latitude}
+                          onChange={(e) => setLatitude(e.target.value)}
+                          placeholder="e.g. 28.5244"
+                          className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Longitude
+                        </label>
+                        <input
+                          type="text"
+                          value={longitude}
+                          onChange={(e) => setLongitude(e.target.value)}
+                          placeholder="e.g. 77.2066"
+                          className="w-full px-3.5 py-2.5 rounded-md border border-gray-300 outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent text-sm bg-white text-gray-900"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Operation Hours */}
                 <div className="grid grid-cols-2 gap-4">

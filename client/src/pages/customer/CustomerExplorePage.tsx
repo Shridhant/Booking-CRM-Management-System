@@ -44,11 +44,18 @@ export default function CustomerExplorePage() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="rounded-[28px] border border-white/60 bg-[#f5e9ed] p-5 shadow-[0px_10px_24px_-16px_rgba(20,16,18,0.26)] md:p-6"
+        className="relative overflow-hidden rounded-[32px] border border-[#fcdbe4] bg-gradient-to-br from-white via-[#fdf1f4] to-[#f7f0fb] p-5 shadow-[0px_20px_40px_-20px_rgba(232,185,197,0.4)] md:p-8"
       >
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-end">
-          <div>
-            <p className="mb-3 font-mono text-xs text-neutral-500">discover and book</p>
+        {/* Layered Luminous Pastel Aurora Mesh Glow Effects */}
+        <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-cyan-400 opacity-[0.42] blur-[80px] mix-blend-multiply pointer-events-none" />
+        <div className="absolute -bottom-24 left-1/4 w-80 h-80 rounded-full bg-blue-400 opacity-[0.45] blur-[90px] mix-blend-multiply pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-violet-400 opacity-[0.40] blur-[80px] mix-blend-multiply pointer-events-none" />
+        <div className="absolute -bottom-12 left-1/3 w-60 h-60 rounded-full bg-pink-400 opacity-[0.48] blur-[70px] mix-blend-multiply pointer-events-none" />
+        <div className="absolute -bottom-16 left-1/2 w-64 h-64 rounded-full bg-[#fca5a5] opacity-[0.30] blur-[75px] mix-blend-multiply pointer-events-none" />
+
+        <div className="relative z-10 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-end">
+          <div className="py-4">
+            <p className="mb-3 font-semibold text-[#db2777] uppercase tracking-widest text-[10px]">discover and book</p>
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-1px] text-neutral-900 sm:text-5xl">
               Find your next beauty and wellness appointment.
             </h1>
@@ -57,28 +64,28 @@ export default function CustomerExplorePage() {
             </p>
           </div>
 
-          <div className="rounded-[22px] border border-white/80 bg-white/85 p-4 shadow-[0px_10px_22px_-18px_rgba(24,16,20,0.34)]">
+          <div className="rounded-[24px] border border-[#fcdbe4]/60 bg-white/75 backdrop-blur-xl p-5 shadow-[0px_10px_25px_-10px_rgba(232,185,197,0.15)]">
             <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4 text-[#db2777]" />
               Search filters
             </div>
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-3.5">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Business, service, or keyword"
-                  className="w-full rounded-full border border-[#eadde2] bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#dca7b5]"
+                  className="w-full rounded-full border border-[#f5c2cf] bg-white py-2.5 pl-10 pr-3.5 text-sm text-neutral-900 outline-none placeholder-neutral-400 focus:border-transparent focus:ring-2 focus:ring-[#e8b9c5]/60 transition"
                 />
               </div>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <input
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
                   placeholder="City"
-                  className="w-full rounded-full border border-[#eadde2] bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#dca7b5]"
+                  className="w-full rounded-full border border-[#f5c2cf] bg-white py-2.5 pl-10 pr-3.5 text-sm text-neutral-900 outline-none placeholder-neutral-400 focus:border-transparent focus:ring-2 focus:ring-[#e8b9c5]/60 transition"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -86,10 +93,10 @@ export default function CustomerExplorePage() {
                   <button
                     key={item.value || "all"}
                     onClick={() => setType(item.value)}
-                    className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                    className={`rounded-full border px-3 py-2.5 text-sm font-medium transition cursor-pointer select-none ${
                       type === item.value
-                        ? "border-[#d79aab] bg-[#e8b9c5] text-neutral-950"
-                        : "border-[#efe4e8] bg-white text-neutral-600 hover:bg-[#fff7fa] hover:text-neutral-900"
+                        ? "border-transparent bg-[#e8b9c5] text-neutral-950 font-semibold shadow-sm hover:bg-[#dca7b5]"
+                        : "border-[#f5e4e8] bg-white text-neutral-600 hover:bg-[#fff0f4] hover:text-neutral-900"
                     }`}
                   >
                     {item.label}

@@ -365,8 +365,8 @@ export default function CustomerBusinessPage() {
                 key={tab.id}
                 onClick={() => jumpToSection(tab.id)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id
-                    ? "bg-neutral-900 text-white"
-                    : "text-neutral-600 hover:bg-[#f7edf1] hover:text-neutral-900"
+                  ? "bg-neutral-900 text-white"
+                  : "text-neutral-600 hover:bg-[#f7edf1] hover:text-neutral-900"
                   }`}
               >
                 {tab.label}
@@ -414,15 +414,15 @@ export default function CustomerBusinessPage() {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {gallery.map((photo) => (
-                    <div 
+                    <div
                       key={photo.id}
                       onClick={() => setLightboxUrl(photo.url)}
                       className="aspect-[4/3] rounded-xl overflow-hidden border border-[#f0e3e8] bg-[#fdfafb] cursor-pointer group relative shadow-[0_4px_12px_-6px_rgba(0,0,0,0.06)]"
                     >
-                      <img 
-                        src={photo.url} 
-                        alt="Workspace showcase" 
-                        className="h-full w-full object-cover group-hover:scale-106 transition duration-500 ease-out" 
+                      <img
+                        src={photo.url}
+                        alt="Workspace showcase"
+                        className="h-full w-full object-cover group-hover:scale-106 transition duration-500 ease-out"
                       />
                       <div className="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
                         <span className="text-[10px] text-white font-semibold bg-neutral-950/65 px-2.5 py-1 rounded-full backdrop-blur-xs">
@@ -452,8 +452,8 @@ export default function CustomerBusinessPage() {
                         key={service.id}
                         onClick={() => toggleService(service.id)}
                         className={`w-full rounded-[16px] border p-4 text-left transition ${selected
-                            ? "border-[#dca6b7] bg-[#fff2f6]"
-                            : "border-[#f0e3e8] bg-white hover:bg-[#fff9fb]"
+                          ? "border-[#dca6b7] bg-[#fff2f6]"
+                          : "border-[#f0e3e8] bg-white hover:bg-[#fff9fb]"
                           }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -495,13 +495,66 @@ export default function CustomerBusinessPage() {
                   </div>
                 ))}
               </div>
-              <div className="rounded-[16px] border border-[#f1e6ea] bg-gradient-to-br from-[#f6edf1] via-[#f2f4f8] to-[#eef3f8] p-4">
-                <p className="text-sm font-semibold text-neutral-900">{activeBranch?.name || "Main branch"}</p>
-                <p className="mt-2 text-sm text-neutral-600">{activeBranch?.address || business.address || "Address not available"}</p>
-                <p className="mt-2 inline-flex items-center gap-2 text-sm text-neutral-600">
-                  <Search className="h-4 w-4" />
-                  Coordinates available on map view
-                </p>
+              <div className="rounded-[16px] border border-[#f1e6ea] bg-gradient-to-br from-[#f6edf1] via-[#f2f4f8] to-[#eef3f8] p-4 flex flex-col justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">{activeBranch?.name || "Main branch"}</p>
+                  <p className="mt-2 text-sm text-neutral-600">{activeBranch?.address || business.address || "Address not available"}</p>
+                </div>
+                {activeBranch?.latitude !== null && activeBranch?.latitude !== undefined &&
+                 activeBranch?.longitude !== null && activeBranch?.longitude !== undefined ? (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${activeBranch.latitude},${activeBranch.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-white border border-[#f1e6ea] shadow-sm hover:shadow-md transition text-xs font-bold text-neutral-800 hover:text-neutral-950"
+                  >
+                    <MapPin className="h-4 w-4 text-[#e8b9c5]" />
+                    Open in Google Maps
+                  </a>
+                ) : (
+                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-neutral-600">
+                    <Search className="h-4 w-4" />
+                    Coordinates available on map view
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+          <section id="reviews" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
+            <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Reviews</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1">
+              <div className="rounded-[16px] border border-[#f1e5ea] bg-[#faf5f7] p-4">
+                <p className="text-4xl font-semibold tracking-[-1px] text-neutral-900">{Number(business.average_rating || 0).toFixed(1)}</p>
+                <p className="mt-1 text-xs text-neutral-500">{reviews?.total || 0} reviews</p>
+                <div className="mt-4 space-y-2">
+                  {ratingBreakdown.map((bucket) => (
+                    <div key={bucket.rating} className="grid grid-cols-[18px_minmax(0,1fr)_20px] items-center gap-2 text-xs text-neutral-600">
+                      <span>{bucket.rating}</span>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[#f0e3e8]">
+                        <div className="h-full bg-[#e3a9bb]" style={{ width: `${bucket.percentage}%` }} />
+                      </div>
+                      <span>{bucket.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {(reviews?.items ?? []).slice(0, 5).map((review) => (
+                  <div key={review.id} className="rounded-[14px] border border-[#f1e5ea] bg-white p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-900">{review.customer_name || "Customer"}</p>
+                        <p className="text-xs text-neutral-500">{formatDate(review.created_at.slice(0, 10))}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2 py-1 text-xs font-semibold text-neutral-700">
+                        <Star className="h-3.5 w-3.5 fill-[#e5a6bb] text-[#e5a6bb]" />
+                        {review.rating}
+                      </span>
+                    </div>
+                    {review.comment && <p className="mt-2 text-sm leading-5 text-neutral-600">{review.comment}</p>}
+                  </div>
+                ))}
               </div>
             </div>
           </section>
@@ -595,8 +648,8 @@ export default function CustomerBusinessPage() {
                               })
                             }}
                             className={`rounded-full border px-3 py-2 text-center text-sm transition ${selected
-                                ? "border-[#d79aab] bg-[#e8b9c5] text-neutral-900"
-                                : "border-[#ece0e5] bg-white text-neutral-700 hover:bg-[#fff5f8]"
+                              ? "border-[#d79aab] bg-[#e8b9c5] text-neutral-900"
+                              : "border-[#ece0e5] bg-white text-neutral-700 hover:bg-[#fff5f8]"
                               }`}
                           >
                             {formatTime(timeInfo.start_time)}
@@ -619,8 +672,8 @@ export default function CustomerBusinessPage() {
                               })
                             }
                             className={`flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left text-xs transition ${selectedSlot.employee_id === null
-                                ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
-                                : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
+                              ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
+                              : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
                               }`}
                           >
                             No preference
@@ -643,8 +696,8 @@ export default function CustomerBusinessPage() {
                                     })
                                   }
                                   className={`flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left text-xs transition ${isChosen
-                                      ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
-                                      : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
+                                    ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
+                                    : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
                                     }`}
                                 >
                                   {employee.name}
@@ -725,44 +778,7 @@ export default function CustomerBusinessPage() {
             )}
           </section>
 
-          <section id="reviews" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Reviews</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1">
-              <div className="rounded-[16px] border border-[#f1e5ea] bg-[#faf5f7] p-4">
-                <p className="text-4xl font-semibold tracking-[-1px] text-neutral-900">{Number(business.average_rating || 0).toFixed(1)}</p>
-                <p className="mt-1 text-xs text-neutral-500">{reviews?.total || 0} reviews</p>
-                <div className="mt-4 space-y-2">
-                  {ratingBreakdown.map((bucket) => (
-                    <div key={bucket.rating} className="grid grid-cols-[18px_minmax(0,1fr)_20px] items-center gap-2 text-xs text-neutral-600">
-                      <span>{bucket.rating}</span>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[#f0e3e8]">
-                        <div className="h-full bg-[#e3a9bb]" style={{ width: `${bucket.percentage}%` }} />
-                      </div>
-                      <span>{bucket.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                {(reviews?.items ?? []).slice(0, 5).map((review) => (
-                  <div key={review.id} className="rounded-[14px] border border-[#f1e5ea] bg-white p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-neutral-900">{review.customer_name || "Customer"}</p>
-                        <p className="text-xs text-neutral-500">{formatDate(review.created_at.slice(0, 10))}</p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2 py-1 text-xs font-semibold text-neutral-700">
-                        <Star className="h-3.5 w-3.5 fill-[#e5a6bb] text-[#e5a6bb]" />
-                        {review.rating}
-                      </span>
-                    </div>
-                    {review.comment && <p className="mt-2 text-sm leading-5 text-neutral-600">{review.comment}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
 
           <section className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
             <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Other salons nearby</h2>
@@ -801,21 +817,21 @@ export default function CustomerBusinessPage() {
 
       {/* Fullscreen Lightbox Preview Overlay */}
       {lightboxUrl && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition duration-300 animate-fade-in"
           onClick={() => setLightboxUrl(null)}
         >
-          <button 
+          <button
             type="button"
             className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 cursor-pointer bg-white/10 hover:bg-white/20 rounded-full transition"
             onClick={() => setLightboxUrl(null)}
           >
             <X className="h-5 w-5" />
           </button>
-          <img 
-            src={lightboxUrl} 
-            alt="Workspace Portfolio Showcase Preview" 
-            className="max-w-full max-h-[95vh] object-contain rounded-xl shadow-2xl transition duration-500 scale-98 sm:scale-100" 
+          <img
+            src={lightboxUrl}
+            alt="Workspace Portfolio Showcase Preview"
+            className="max-w-full max-h-[95vh] object-contain rounded-xl shadow-2xl transition duration-500 scale-98 sm:scale-100"
           />
         </div>
       )}
