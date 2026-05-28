@@ -9,6 +9,8 @@ import {
 } from "../../api/customer.api"
 import { formatDate, formatTime } from "../../lib/date"
 import type { CustomerBooking } from "../../types"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+
 
 type Scope = "active" | "completed" | "cancelled" | "all"
 
@@ -88,7 +90,7 @@ export default function CustomerBookingsPage() {
 
       {isLoading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+          <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
         </div>
       ) : error ? (
         <div className="app-card p-6 text-sm text-red-600">Could not load your bookings.</div>

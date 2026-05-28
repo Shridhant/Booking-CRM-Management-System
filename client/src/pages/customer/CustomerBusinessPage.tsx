@@ -21,6 +21,7 @@ import { motion } from "motion/react"
 import heroFallback from "../../assets/hero.png"
 import { createCustomerBookingApi } from "../../api/customer.api"
 import { getPublicGalleryApi } from "../../api/gallery.api"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 import {
   getPublicBusinessApi,
   getPublicSlotsApi,
@@ -277,7 +278,7 @@ export default function CustomerBusinessPage() {
   if (businessLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+        <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
       </div>
     )
   }

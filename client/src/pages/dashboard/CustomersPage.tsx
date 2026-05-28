@@ -29,6 +29,8 @@ import {
 import { motion, AnimatePresence } from "motion/react"
 import { formatDate, formatTime } from "../../lib/date"
 import type { Customer, Booking } from "../../types"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+
 
 export default function CustomersPage() {
   const queryClient = useQueryClient()
@@ -216,9 +218,9 @@ export default function CustomersPage() {
 
       {/* ── Customers Registry Display Grid ────────────────────── */}
       {listLoading ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-lg shadow-vercel-sm">
-          <Loader2 className="h-8 w-8 text-neutral-950 animate-spin" />
-          <p className="text-xs text-gray-400 mt-3 font-medium">Retrieving customer directory...</p>
+        <div className="py-24 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-lg shadow-vercel-sm gap-3">
+          <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
+          <p className="text-xs text-gray-400 mt-1 font-medium">Retrieving customer directory...</p>
         </div>
       ) : customers.length === 0 ? (
         <div className="py-20 text-center bg-white border border-gray-100 rounded-lg shadow-vercel-sm">
@@ -517,9 +519,9 @@ export default function CustomersPage() {
                   </div>
 
                   {historyLoading ? (
-                    <div className="py-12 flex flex-col items-center justify-center">
-                      <Loader2 className="h-6 w-6 text-neutral-950 animate-spin" />
-                      <p className="text-[10px] text-gray-400 mt-2 font-medium">Loading history logs...</p>
+                    <div className="py-12 flex flex-col items-center justify-center gap-2">
+                      <ThreeDotsLoader color="bg-neutral-900" size="w-2.5 h-2.5" className="py-1" />
+                      <p className="text-[10px] text-gray-400 mt-1 font-medium">Loading history logs...</p>
                     </div>
                   ) : bookingHistory.length === 0 ? (
                     <div className="py-12 text-center border border-dashed border-gray-200 rounded-lg">

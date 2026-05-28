@@ -34,20 +34,22 @@ export const createBusinessSchema = z.object({
     longitude: z.number().optional(),
 })
 
+const emptyToNull = (val: unknown) => (val === "" ? null : val)
+
 export const updateBusinessSchema = z.object({
     name: z.string().min(2).optional(),
-    description: z.string().optional().nullable(),
-    phone: z.string().min(7).max(20).optional().nullable(),
-    email: z.string().email("Invalid email").optional().nullable(),
-    address: z.string().optional().nullable(),
-    city: z.string().optional().nullable(),
+    description: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    phone: z.preprocess(emptyToNull, z.string().min(7).max(20).optional().nullable()),
+    email: z.preprocess(emptyToNull, z.string().email("Invalid email").optional().nullable()),
+    address: z.preprocess(emptyToNull, z.string().optional().nullable()),
+    city: z.preprocess(emptyToNull, z.string().optional().nullable()),
     latitude: z.number().optional().nullable(),
     longitude: z.number().optional().nullable(),
     booking_type: bookingTypeEnum.optional(),
     allow_employee_selection: z.boolean().optional(),
     auto_assign_strategy: autoAssignStrategyEnum.optional(),
-    logo_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
-    cover_media_id: z.string().uuid("Invalid UUID").optional().nullable(),
+    logo_media_id: z.preprocess(emptyToNull, z.string().uuid("Invalid UUID").optional().nullable()),
+    cover_media_id: z.preprocess(emptyToNull, z.string().uuid("Invalid UUID").optional().nullable()),
 })
 
 export const updateBusinessSettingsSchema = z.object({

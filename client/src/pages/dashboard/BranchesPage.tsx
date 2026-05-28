@@ -22,6 +22,8 @@ import {
 import { motion, AnimatePresence } from "motion/react"
 import { formatTime } from "../../lib/date"
 import type { Branch } from "../../types"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+
 
 export default function BranchesPage() {
   const queryClient = useQueryClient()
@@ -194,7 +196,7 @@ export default function BranchesPage() {
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
-          <Loader2 className="h-8 w-8 text-neutral-950 animate-spin" />
+          <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
           <p className="text-sm font-medium">Fetching locations...</p>
         </div>
       ) : branches.length === 0 ? (

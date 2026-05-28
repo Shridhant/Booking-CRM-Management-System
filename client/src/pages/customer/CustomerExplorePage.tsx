@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowRight, BadgeCheck, Loader2, MapPin, Search, SlidersHorizontal, Star } from "lucide-react"
+import { ArrowRight, BadgeCheck, MapPin, Search, SlidersHorizontal, Star } from "lucide-react"
 import { motion } from "motion/react"
 import { searchPublicBusinessesApi } from "../../api/public.api"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 
 const businessTypes = [
   { label: "All", value: "" },
@@ -108,12 +109,15 @@ export default function CustomerExplorePage() {
               {data ? `${data.total} businesses found` : "Available businesses"}
             </h2>
           </div>
-          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />}
         </div>
 
         {error ? (
           <div className="rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">Could not load businesses.</div>
-        ) : businesses.length === 0 && !isLoading ? (
+        ) : isLoading ? (
+          <div className="flex min-h-[300px] items-center justify-center">
+            <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
+          </div>
+        ) : businesses.length === 0 ? (
           <div className="rounded-[20px] border border-white/70 bg-white/80 p-8 text-center">
             <p className="text-base font-semibold text-neutral-900">No businesses match those filters.</p>
             <p className="mt-1 text-sm text-neutral-500">Try removing a city, type, or keyword.</p>

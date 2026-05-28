@@ -43,6 +43,8 @@ import type { AdminUser } from "../../api/admin.api"
 import { onboardBusinessApi } from "../../api/auth.api"
 import { uploadMediaApi } from "../../api/media.api"
 import type { Business } from "../../types"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+
 
 // Onboarding Validation Schema
 const onboardSchema = z.object({
@@ -222,10 +224,20 @@ export default function AdminConsolePage() {
 
   const onEditSubmit = (data: EditBusinessForm) => {
     if (!editingBusiness) return
+    
+    const sanitized = {
+      ...data,
+      description: data.description || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      address: data.address || null,
+      city: data.city || null,
+    }
+
     updateBusinessMutation.mutate({
       id: editingBusiness.id,
       data: {
-        ...data,
+        ...sanitized,
         logo_media_id: logoMediaId,
         cover_media_id: coverMediaId
       }
@@ -353,7 +365,7 @@ Admin Password: ${onboardSuccessData.plain_password}`
 
             {businessesLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-neutral-900" />
+                <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
                 <span className="text-sm font-medium text-neutral-500">Loading partner salons...</span>
               </div>
             ) : filteredBusinesses.length === 0 ? (
@@ -496,7 +508,7 @@ Admin Password: ${onboardSuccessData.plain_password}`
 
             {usersLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-neutral-900" />
+                <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
                 <span className="text-sm font-medium text-neutral-500">Loading directory users...</span>
               </div>
             ) : filteredUsers.length === 0 ? (

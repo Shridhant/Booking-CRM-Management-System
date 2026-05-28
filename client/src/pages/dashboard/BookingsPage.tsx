@@ -36,6 +36,8 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import type { Customer, SlotResult, ServiceCategory, Service } from "../../types"
+import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
+
 
 export default function BookingsPage() {
   const queryClient = useQueryClient()
@@ -504,9 +506,9 @@ export default function BookingsPage() {
               </p>
             </div>
           ) : bookingsLoading ? (
-            <div className="py-20 flex flex-col items-center justify-center">
-              <Loader2 className="h-8 w-8 text-neutral-950 animate-spin" />
-              <p className="text-xs text-gray-400 mt-3 font-medium">Loading schedule...</p>
+            <div className="py-20 flex flex-col items-center justify-center gap-3">
+              <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
+              <p className="text-xs text-gray-400 mt-1 font-medium">Loading schedule...</p>
             </div>
           ) : bookings.length === 0 ? (
             <div className="py-16 text-center">
@@ -1156,9 +1158,9 @@ export default function BookingsPage() {
                       </label>
 
                       {slotsLoading ? (
-                        <div className="py-12 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
-                          <Loader2 className="h-6 w-6 text-neutral-950 animate-spin" />
-                          <p className="text-[10px] text-gray-400 mt-2 font-medium">Calculating available slots...</p>
+                        <div className="py-12 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg bg-gray-50/50 gap-2">
+                          <ThreeDotsLoader color="bg-neutral-900" size="w-2.5 h-2.5" className="py-1" />
+                          <p className="text-[10px] text-gray-400 mt-1 font-medium">Calculating available slots...</p>
                         </div>
                       ) : uniqueTimes.length === 0 ? (
                         <div className="py-10 text-center border border-dashed border-rose-100 rounded-lg bg-rose-50/20 text-rose-700">
