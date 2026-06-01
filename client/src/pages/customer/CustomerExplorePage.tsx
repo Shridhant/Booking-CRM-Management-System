@@ -1,25 +1,25 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowRight, BadgeCheck, MapPin, Search, SlidersHorizontal, Star } from "lucide-react"
+import { BadgeCheck, MapPin, Search, Star, Heart, Sparkles } from "lucide-react"
 import { motion } from "motion/react"
 import { searchPublicBusinessesApi } from "../../api/public.api"
 import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 
-const businessTypes = [
-  { label: "All", value: "" },
-  { label: "Salon", value: "salon" },
-  { label: "Spa", value: "spa" },
-  { label: "Nails", value: "nail_studio" },
-  { label: "Barber", value: "barber" },
-  { label: "Makeup", value: "makeup_studio" },
-  { label: "Professional", value: "professional" }
+// Premium category structure matching the mockup icons
+const categoryItems = [
+  { label: "Salon & Spa", value: "salon", color: "bg-[#fff6e6] text-[#ff9900] border-[#ffe6b3]", icon: "✨" },
+  { label: "Cleaning", value: "spa", color: "bg-[#e6f9f3] text-[#00b386] border-[#b3f0db]", icon: "🧼" },
+  { label: "Handyman", value: "professional", color: "bg-[#fffdeb] text-[#e6b800] border-[#fff799]", icon: "🛠️" },
+  { label: "Nails", value: "nail_studio", color: "bg-[#ebf8ff] text-[#007acc] border-[#99d6ff]", icon: "💅" },
+  { label: "Barber", value: "barber", color: "bg-[#f9ebff] text-[#ac33db] border-[#e6b3ff]", icon: "💈" }
 ]
 
 export default function CustomerExplorePage() {
   const [query, setQuery] = useState("")
   const [city, setCity] = useState("")
   const [type, setType] = useState("")
+  const [favorites, setFavorites] = useState<string[]>([])
 
   const searchParams = useMemo(
     () => ({
@@ -36,157 +36,214 @@ export default function CustomerExplorePage() {
     queryFn: () => searchPublicBusinessesApi(searchParams)
   })
 
+
+
   const businesses = data?.items ?? []
 
+  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFavorites(prev =>
+      prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id]
+    )
+  }
+
   return (
-    <div className="space-y-7">
-      <motion.section
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="relative overflow-hidden rounded-[32px] border border-[#fcdbe4] bg-gradient-to-br from-white via-[#fdf1f4] to-[#f7f0fb] p-5 shadow-[0px_20px_40px_-20px_rgba(232,185,197,0.4)] md:p-8"
-      >
-        {/* Layered Luminous Pastel Aurora Mesh Glow Effects */}
-        <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-cyan-400 opacity-[0.42] blur-[80px] mix-blend-multiply pointer-events-none" />
-        <div className="absolute -bottom-24 left-1/4 w-80 h-80 rounded-full bg-blue-400 opacity-[0.45] blur-[90px] mix-blend-multiply pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-64 h-64 rounded-full bg-violet-400 opacity-[0.40] blur-[80px] mix-blend-multiply pointer-events-none" />
-        <div className="absolute -bottom-12 left-1/3 w-60 h-60 rounded-full bg-pink-400 opacity-[0.48] blur-[70px] mix-blend-multiply pointer-events-none" />
-        <div className="absolute -bottom-16 left-1/2 w-64 h-64 rounded-full bg-[#fca5a5] opacity-[0.30] blur-[75px] mix-blend-multiply pointer-events-none" />
+    <div className="space-y-8 pb-16">
 
-        <div className="relative z-10 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-end">
-          <div className="py-4">
-            <p className="mb-3 font-semibold text-[#db2777] uppercase tracking-widest text-[10px]">discover and book</p>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-1px] text-neutral-900 sm:text-5xl">
-              Find your next beauty and wellness appointment.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-neutral-600">
-              Browse verified salons, compare specialists and services, then book a time that fits your day.
-            </p>
-          </div>
-
-          <div className="rounded-[24px] border border-[#fcdbe4]/60 bg-white/75 backdrop-blur-xl p-5 shadow-[0px_10px_25px_-10px_rgba(232,185,197,0.15)]">
-            <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-              <SlidersHorizontal className="h-4 w-4 text-[#db2777]" />
-              Search filters
-            </div>
-            <div className="mt-4 space-y-3.5">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Business, service, or keyword"
-                  className="w-full rounded-full border border-[#f5c2cf] bg-white py-2.5 pl-10 pr-3.5 text-sm text-neutral-900 outline-none placeholder-neutral-400 focus:border-transparent focus:ring-2 focus:ring-[#e8b9c5]/60 transition"
-                />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                <input
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  placeholder="City"
-                  className="w-full rounded-full border border-[#f5c2cf] bg-white py-2.5 pl-10 pr-3.5 text-sm text-neutral-900 outline-none placeholder-neutral-400 focus:border-transparent focus:ring-2 focus:ring-[#e8b9c5]/60 transition"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {businessTypes.map((item) => (
-                  <button
-                    key={item.value || "all"}
-                    onClick={() => setType(item.value)}
-                    className={`rounded-full border px-3 py-2.5 text-sm font-medium transition cursor-pointer select-none ${
-                      type === item.value
-                        ? "border-transparent bg-[#e8b9c5] text-neutral-950 font-semibold shadow-sm hover:bg-[#dca7b5]"
-                        : "border-[#f5e4e8] bg-white text-neutral-600 hover:bg-[#fff0f4] hover:text-neutral-900"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* ── 2. Interactive Search & Filters ── */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] items-start">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for salon, cleaning, massage, handyman..."
+            className="w-full rounded-full border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 outline-none shadow-sm focus:ring-2 focus:ring-[#db2777]/20 focus:border-[#db2777] transition-all"
+          />
         </div>
-      </motion.section>
 
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="font-mono text-xs text-neutral-500">results</p>
-            <h2 className="text-lg font-semibold text-neutral-900">
-              {data ? `${data.total} businesses found` : "Available businesses"}
-            </h2>
-          </div>
+        <div className="relative">
+          <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Search by city (e.g. Delhi, Hawaii)"
+            className="w-full rounded-full border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 outline-none shadow-sm focus:ring-2 focus:ring-[#db2777]/20 focus:border-[#db2777] transition-all"
+          />
+        </div>
+      </div>
+
+      {/* ── 3. Promotional Vivid Mesh Offer Card Banner ── */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00bfff] via-[#33ccff] to-[#80e5ff] p-6 text-white shadow-xl flex items-center justify-between"
+      >
+        {/* Animated Abstract Glass Bubbles */}
+        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-xl -translate-y-12 translate-x-12 pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 h-28 w-28 rounded-full bg-cyan-300/30 blur-lg pointer-events-none" />
+
+        <div className="relative z-10 max-w-lg space-y-2">
+          <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+            Special Promo
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">
+            Up to 50% Off!
+          </h2>
+          <p className="text-xs text-white/95 max-w-sm">
+            Book home cleaning, premium salon styling, or wellness sessions now to avail the offer.
+          </p>
+          <button className="mt-3 bg-[#ffcc00] hover:bg-[#e6b800] text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition duration-200 active:scale-95">
+            Grab the Offer Now
+          </button>
+        </div>
+
+        {/* Right side floating graphics (Mock Illustration Container) */}
+        <div className="relative hidden md:flex items-center justify-center w-40 h-32 pr-4 z-10">
+          <div className="absolute text-5xl animate-bounce duration-1000">🧼🧴✨</div>
+        </div>
+      </motion.div>
+
+      {/* ── 4. Circular Category Selectors Bar ── */}
+      <div className="space-y-3">
+        <h3 className="text-base font-bold text-neutral-800 flex items-center gap-1.5">
+          <Sparkles className="h-4.5 w-4.5 text-[#db2777]" />
+          Category
+        </h3>
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
+          <button
+            onClick={() => setType("")}
+            className={`flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none`}
+          >
+            <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${type === ""
+                ? "bg-neutral-900 text-white border-neutral-950 scale-105"
+                : "bg-white text-neutral-600 border-neutral-100 hover:border-neutral-200"
+              }`}>
+              🌍
+            </div>
+            <span className="text-xs font-semibold text-neutral-700">All</span>
+          </button>
+
+          {categoryItems.map((cat) => {
+            const isSelected = type === cat.value
+            return (
+              <button
+                key={cat.label}
+                onClick={() => setType(cat.value)}
+                className="flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none"
+              >
+                <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${isSelected
+                    ? "bg-neutral-900 text-white border-neutral-950 scale-105"
+                    : `${cat.color} hover:brightness-95`
+                  }`}>
+                  {cat.icon}
+                </div>
+                <span className="text-xs font-semibold text-neutral-700">{cat.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── 5. Popular Service Cards ── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-neutral-800">Popular Services</h3>
+          <span className="text-xs font-semibold text-[#db2777] cursor-pointer hover:underline">See all</span>
         </div>
 
         {error ? (
-          <div className="rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">Could not load businesses.</div>
+          <div className="rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+            Could not load popular services.
+          </div>
         ) : isLoading ? (
-          <div className="flex min-h-[300px] items-center justify-center">
-            <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
+          <div className="flex min-h-[220px] items-center justify-center">
+            <ThreeDotsLoader color="bg-[#db2777]" size="w-3 h-3" />
           </div>
         ) : businesses.length === 0 ? (
-          <div className="rounded-[20px] border border-white/70 bg-white/80 p-8 text-center">
-            <p className="text-base font-semibold text-neutral-900">No businesses match those filters.</p>
-            <p className="mt-1 text-sm text-neutral-500">Try removing a city, type, or keyword.</p>
+          <div className="rounded-[20px] border border-neutral-200 bg-white p-8 text-center">
+            <p className="text-sm font-semibold text-neutral-900">No popular services found in this category.</p>
+            <p className="mt-1 text-xs text-neutral-500">Try modifying filters or switching search query.</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {businesses.map((business, index) => (
-              <motion.div
-                key={business.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04, duration: 0.28 }}
-              >
-                <Link
-                  to={`/customer/businesses/${business.slug || business.id}`}
-                  className="group block overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-[0px_10px_22px_-16px_rgba(28,16,24,0.3)] transition hover:-translate-y-0.5"
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {businesses.map((business, index) => {
+              const isFav = favorites.includes(business.id)
+              return (
+                <motion.div
+                  key={business.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04, duration: 0.28 }}
                 >
-                  <div className="aspect-[16/9] bg-[#f1e5e9]">
-                    {business.cover_url || business.logo_url ? (
-                      <img
-                        src={business.cover_url || business.logo_url || ""}
-                        alt={business.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#f5d3df] via-[#f4edf1] to-[#dce9f6]" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="truncate text-base font-semibold text-neutral-900">{business.name}</h3>
-                          {business.is_verified && <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" />}
+                  <Link
+                    to={`/customer/businesses/${business.slug || business.id}`}
+                    className="group block overflow-hidden rounded-3xl border border-neutral-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-md transition duration-300"
+                  >
+                    {/* Header Image with Heart and Rating Overlay */}
+                    <div className="relative aspect-[16/10] bg-neutral-100 overflow-hidden">
+                      {business.cover_url || business.logo_url ? (
+                        <img
+                          src={business.cover_url || business.logo_url || ""}
+                          alt={business.name}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#db2777]/20 via-pink-100 to-cyan-100" />
+                      )}
+
+                      {/* Favorite Heart Button */}
+                      <button
+                        onClick={(e) => toggleFavorite(e, business.id)}
+                        className="absolute right-3.5 top-3.5 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-md border border-neutral-100 flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                      >
+                        <Heart className={`h-4 w-4 transition duration-200 ${isFav ? "fill-red-500 text-red-500" : "text-neutral-500 hover:text-red-500"}`} />
+                      </button>
+
+                      {/* Floating Star Rating Badge */}
+                      <div className="absolute left-3.5 top-3.5 z-10 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-neutral-800 shadow-md border border-neutral-100">
+                        <Star className="h-3 w-3 fill-[#ffcc00] text-[#ffcc00]" />
+                        <span>{Number(business.average_rating || 0).toFixed(1)}</span>
+                      </div>
+                    </div>
+
+                    {/* Detailed Card Info */}
+                    <div className="p-5 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="truncate text-base font-bold text-neutral-800 leading-tight">
+                          {business.name}
+                        </h4>
+                        {business.is_verified && <BadgeCheck className="h-4.5 w-4.5 text-emerald-500 shrink-0" />}
+                      </div>
+
+                      <p className="text-xs text-neutral-400 capitalize font-medium">
+                        {business.business_type.replace("_", " ")} &bull; {business.city || "Hawaii"}
+                      </p>
+
+                      <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">
+                        {business.description || "Browse and book local experts in premium quality clean beauty and home care services."}
+                      </p>
+
+                      {/* Pricing Row & Action Button */}
+                      <div className="pt-3 border-t border-neutral-50 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-neutral-400 font-medium">Price Starts From</p>
+                          <p className="text-sm font-extrabold text-neutral-900">$120 <span className="text-[10px] text-neutral-400 font-normal">/ hr</span></p>
                         </div>
-                        <p className="mt-1 text-sm capitalize text-neutral-500">
-                          {business.business_type.replace("_", " ")}
-                          {business.city ? ` in ${business.city}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1 rounded-full bg-[#fff1f5] px-2 py-1 text-xs font-semibold text-neutral-700">
-                        <Star className="h-3.5 w-3.5 fill-[#e5a6bb] text-[#e5a6bb]" />
-                        {Number(business.average_rating || 0).toFixed(1)}
+                        <span className="bg-[#00bfff] hover:bg-[#0099cc] text-white px-4.5 py-2 rounded-full text-xs font-bold shadow-md transition duration-200">
+                          Book
+                        </span>
                       </div>
                     </div>
-                    <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-neutral-600">
-                      {business.description || business.address || "View services, branches, open slots, and customer reviews."}
-                    </p>
-                    <div className="mt-4 flex items-center justify-between text-sm">
-                      <span className="text-neutral-500">{business.review_count} reviews</span>
-                      <span className="inline-flex items-center gap-1 font-medium text-neutral-900">
-                        Book now
-                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              )
+            })}
           </div>
         )}
-      </section>
+      </div>
     </div>
   )
 }

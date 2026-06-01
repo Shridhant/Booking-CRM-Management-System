@@ -6,10 +6,8 @@ import {
   BadgeCheck,
   Calendar,
   Check,
-  Clock,
   Loader2,
   MapPin,
-  MessageSquare,
   Phone,
   Search,
   Share2,
@@ -47,16 +45,6 @@ type SlotChoice = {
   end_time: string
 }
 
-type SectionTab = "about" | "services" | "hours" | "team" | "reviews"
-
-const sectionTabs: { id: SectionTab; label: string }[] = [
-  { id: "about", label: "About" },
-  { id: "services", label: "Services" },
-  { id: "hours", label: "Work hours & address" },
-  { id: "team", label: "Meet the team" },
-  { id: "reviews", label: "Reviews" }
-]
-
 const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 export default function CustomerBusinessPage() {
@@ -66,7 +54,6 @@ export default function CustomerBusinessPage() {
   const queryClient = useQueryClient()
   const { isAuthenticated, user } = useAuthStore()
 
-  const [activeTab, setActiveTab] = useState<SectionTab>("about")
   const [selectedBranchId, setSelectedBranchId] = useState("")
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
   const [bookingDate, setBookingDate] = useState(today())
@@ -238,7 +225,7 @@ export default function CustomerBusinessPage() {
       })
     },
     onSuccess: () => {
-      setSuccessMessage("Booking confirmed. You can manage it from My bookings.")
+      setSuccessMessage("Booking confirmed! You can manage it from My bookings.")
       setSelectedServiceIds([])
       setSelectedSlot(null)
       setNotes("")
@@ -270,15 +257,39 @@ export default function CustomerBusinessPage() {
     bookingMutation.mutate()
   }
 
-  const jumpToSection = (id: SectionTab) => {
-    setActiveTab(id)
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+  // Conversion-optimizing Dynamic CTA State Builder
+  const getCtaState = () => {
+    if (selectedServiceIds.length === 0) {
+      return {
+        text: "Select Service First",
+        action: () => {
+          document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "center" })
+        },
+        className: "bg-neutral-900 text-white hover:bg-neutral-800"
+      }
+    }
+    if (!selectedSlot) {
+      return {
+        text: "Choose Time Slot",
+        action: () => {
+          document.getElementById("available-times")?.scrollIntoView({ behavior: "smooth", block: "center" })
+        },
+        className: "bg-[#00bfff] text-white hover:bg-[#0099cc]"
+      }
+    }
+    return {
+      text: isAuthenticated ? "Confirm Booking" : "Login to Book",
+      action: handleBook,
+      className: "bg-[#ffcc00] text-neutral-900 hover:bg-[#e6b800]"
+    }
   }
+
+  const ctaState = getCtaState()
 
   if (businessLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
+        <ThreeDotsLoader color="bg-[#db2777]" size="w-3 h-3" />
       </div>
     )
   }
@@ -302,518 +313,530 @@ export default function CustomerBusinessPage() {
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-8 max-w-5xl mx-auto pb-16">
+      {/* Back button */}
+      <div className="flex items-center justify-between">
         <Link to="/customer" className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-950">
           <ArrowLeft className="h-4 w-4" />
           Back to explore
         </Link>
-        <button className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-white">
-          <Share2 className="h-4 w-4" />
+        <button className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 shadow-sm transition">
+          <Share2 className="h-3.5 w-3.5" />
           Share
         </button>
       </div>
 
+      {/* ── 1. HERO SECTION ── */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="rounded-[28px] border border-white/70 bg-white/90 p-4 shadow-[0px_12px_26px_-16px_rgba(20,14,16,0.28)] sm:p-5"
+        className="rounded-[28px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#f0e3e8] pb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-100 pb-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-2xl font-semibold tracking-[-0.6px] text-neutral-900 sm:text-3xl">{business.name}</h1>
-              {business.is_verified && <BadgeCheck className="h-5 w-5 text-emerald-600" />}
+              <h1 className="truncate text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">{business.name}</h1>
+              {business.is_verified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-neutral-600">
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-4 w-4 fill-[#e5a6bb] text-[#e5a6bb]" />
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2.5 py-1 text-[#db2777]">
+                <Star className="h-3.5 w-3.5 fill-[#db2777] text-[#db2777]" />
                 {Number(business.average_rating || 0).toFixed(1)}
               </span>
               <span>{business.review_count} reviews</span>
               {business.city && (
                 <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-3.5 w-3.5 text-neutral-400" />
                   {business.city}
                 </span>
               )}
             </div>
           </div>
+
+          {/* Quick sticky primary Dynamic CTA Button */}
           <button
-            onClick={handleBook}
-            disabled={!selectedSlot || selectedServiceIds.length === 0 || bookingMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-full bg-[#e8b9c5] px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-[#e4acbc] disabled:opacity-60"
+            onClick={ctaState.action}
+            disabled={bookingMutation.isPending}
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-extrabold shadow-md transition duration-200 active:scale-95 ${ctaState.className}`}
           >
             {bookingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-            Book now
+            {ctaState.text}
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {/* Gallery grid images */}
+        <div className="grid gap-3 grid-cols-3">
           {heroImages.map((image, index) => (
-            <div key={`${image}-${index}`} className="aspect-[16/11] overflow-hidden rounded-[18px] bg-[#f2e6ea]">
-              <img src={image || heroFallback} alt={business.name} className="h-full w-full object-cover" />
+            <div key={`${image}-${index}`} className="aspect-[16/11] overflow-hidden rounded-[20px] bg-[#f9f5f7] border border-neutral-100 shadow-sm">
+              <img src={image || heroFallback} alt={business.name} className="h-full w-full object-cover transition hover:scale-103 duration-300" />
             </div>
           ))}
         </div>
-
-        <div className="mt-5 overflow-x-auto">
-          <div className="flex min-w-max items-center gap-2 border-b border-[#efe3e8] pb-1">
-            {sectionTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => jumpToSection(tab.id)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${activeTab === tab.id
-                  ? "bg-neutral-900 text-white"
-                  : "text-neutral-600 hover:bg-[#f7edf1] hover:text-neutral-900"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </motion.section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+      {/* ── 2. BOOK APPOINTMENT CARD (Pushed to absolute top flow) ── */}
+      <section className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5">
+        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Appointment</p>
+            <h2 className="text-lg font-bold text-neutral-800">Book Appointment</h2>
+          </div>
+          {slotsLoading && <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-neutral-600">Select Branch</label>
+            <select
+              value={activeBranchId}
+              onChange={(e) => {
+                setSelectedBranchId(e.target.value)
+                setSelectedSlot(null)
+              }}
+              className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-semibold"
+            >
+              {branches.map((branch: Branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-neutral-600">Select Date</label>
+            <input
+              type="date"
+              min={today()}
+              value={bookingDate}
+              onChange={(e) => {
+                setBookingDate(e.target.value)
+                setSelectedSlot(null)
+              }}
+              className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-semibold"
+            />
+          </div>
+        </div>
+
+        {/* Selected Summary Details */}
+        <div className="rounded-2xl bg-[#fafafa] border border-neutral-100 p-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span className="text-neutral-500">Selected Services</span>
+            <span className="text-neutral-800 bg-white px-2.5 py-1 rounded-full shadow-sm border border-neutral-100">
+              {selectedServices.length} Selected
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span className="text-neutral-500">Total Duration</span>
+            <span className="text-neutral-800">{totalDuration || 0} min</span>
+          </div>
+          <div className="flex items-center justify-between text-xs font-semibold pt-2.5 border-t border-neutral-200/60">
+            <span className="text-neutral-500 font-bold">Estimated Cost</span>
+            <span className="text-sm font-extrabold text-[#db2777]">Rs {totalPrice.toFixed(0)}</span>
+          </div>
+        </div>
+
+        {/* Dynamic CTA Box button */}
+        <div className="space-y-3">
+          <button
+            onClick={ctaState.action}
+            disabled={bookingMutation.isPending}
+            className={`w-full py-3.5 rounded-full text-xs font-extrabold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-97 ${ctaState.className}`}
+          >
+            {bookingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+            {ctaState.text}
+          </button>
+
+          {bookingMutation.error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium">
+              {bookingMutation.error instanceof Error ? bookingMutation.error.message : "Could not create booking."}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold">
+              {successMessage}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── 3. SERVICES SECTION ── */}
+      <section id="services" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Service Menu</p>
+            <h2 className="text-lg font-bold text-neutral-800">Services Checklist</h2>
+          </div>
+          {servicesLoading && <Loader2 className="h-4.5 w-4.5 animate-spin text-neutral-400" />}
+        </div>
+
         <div className="space-y-6">
-          <section id="about" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <div className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
-              <div className="rounded-[18px] border border-[#f0e3e8] bg-[#faf4f7] p-4">
-                <h3 className="text-sm font-semibold text-neutral-900">Contact</h3>
-                <div className="mt-3 space-y-2 text-sm text-neutral-600">
-                  {business.phone && (
-                    <p className="inline-flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-neutral-500" />
-                      {business.phone}
-                    </p>
-                  )}
-                  {business.email && <p>{business.email}</p>}
-                  {activeBranch?.address && (
-                    <p className="inline-flex items-start gap-2">
-                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" />
-                      {activeBranch.address}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">About</h2>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  {business.description || "This salon offers curated services with trained specialists and a calm studio setup for repeatable results."}
-                </p>
+          {categories.map((category) => (
+            <div key={category.id || "uncategorized"} className="space-y-2.5">
+              <h3 className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider">{category.name}</h3>
+              <div className="grid gap-3">
+                {category.services.map((service: Service) => {
+                  const isChecked = selectedServiceIds.includes(service.id)
+                  return (
+                    <button
+                      key={service.id}
+                      onClick={() => toggleService(service.id)}
+                      className={`w-full rounded-2xl border p-4 text-left transition duration-200 ${
+                        isChecked
+                          ? "border-[#db2777] bg-pink-50/20 shadow-inner"
+                          : "border-neutral-150 bg-white hover:bg-neutral-50"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-neutral-800">{service.name}</p>
+                          <p className="mt-0.5 text-[10px] font-semibold text-neutral-400">{service.duration_minutes} min</p>
+                          {service.description && (
+                            <p className="mt-2 text-xs leading-relaxed text-neutral-500">{service.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-extrabold text-[#db2777]">Rs {Number(service.min_price || 0).toFixed(0)}</span>
+                          <span className={`h-5 w-5 rounded-full border flex items-center justify-center transition-all ${
+                            isChecked ? "bg-[#db2777] border-[#db2777] text-white" : "border-neutral-300"
+                          }`}>
+                            {isChecked && <Check className="h-3 w-3" />}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            {/* Showcase Gallery Portfolio */}
-            {gallery && gallery.length > 0 && (
-              <div className="mt-6 border-t border-[#f0e3e8] pt-5">
-                <h3 className="text-base font-semibold tracking-[-0.28px] text-[#1c181a] mb-3">
-                  Workspace Portfolio
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {gallery.map((photo) => (
-                    <div
-                      key={photo.id}
-                      onClick={() => setLightboxUrl(photo.url)}
-                      className="aspect-[4/3] rounded-xl overflow-hidden border border-[#f0e3e8] bg-[#fdfafb] cursor-pointer group relative shadow-[0_4px_12px_-6px_rgba(0,0,0,0.06)]"
-                    >
-                      <img
-                        src={photo.url}
-                        alt="Workspace showcase"
-                        className="h-full w-full object-cover group-hover:scale-106 transition duration-500 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-                        <span className="text-[10px] text-white font-semibold bg-neutral-950/65 px-2.5 py-1 rounded-full backdrop-blur-xs">
-                          Expand View
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+      {/* ── 4. AVAILABLE TIMES SLOTS SECTION ── */}
+      <section id="available-times" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div>
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Timing Selection</p>
+          <h2 className="text-lg font-bold text-neutral-800">Available Times</h2>
+        </div>
+
+        {selectedServiceIds.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-neutral-200 p-4 text-xs font-semibold text-neutral-400 text-center">
+            Please check / select at least one service above to unlock slot timings.
+          </p>
+        ) : uniqueStartTimes.length === 0 && !slotsLoading ? (
+          <p className="rounded-2xl border border-dashed border-neutral-200 p-4 text-xs font-semibold text-neutral-400 text-center">
+            No slot times available for selected services on this date.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {uniqueStartTimes.map((timeInfo) => {
+                const isSelected = selectedSlot?.start_time === timeInfo.start_time
+                return (
+                  <button
+                    key={timeInfo.start_time}
+                    onClick={() => {
+                      setSelectedSlot({
+                        employee_id: null,
+                        employee_name: "Any specialist",
+                        start_time: timeInfo.start_time,
+                        end_time: timeInfo.end_time
+                      })
+                    }}
+                    className={`rounded-full border py-2.5 text-center text-xs font-bold transition duration-200 cursor-pointer ${
+                      isSelected
+                        ? "bg-neutral-900 border-neutral-950 text-white shadow-sm"
+                        : "bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300"
+                    }`}
+                  >
+                    {formatTime(timeInfo.start_time)}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Specialist Preference dropdown inside timing context */}
+            {selectedSlot && (
+              <div className="rounded-2xl bg-neutral-50/50 p-4 border border-neutral-100 space-y-2">
+                <label className="block text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">
+                  Specialist Preference
+                </label>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSlot({ ...selectedSlot, employee_id: null, employee_name: "Any specialist" })}
+                    className={`flex items-center justify-between rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                      selectedSlot.employee_id === null
+                        ? "bg-[#db2777]/10 border-[#db2777] text-[#db2777]"
+                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <span>Any Specialist</span>
+                    {selectedSlot.employee_id === null && <Check className="h-3.5 w-3.5" />}
+                  </button>
+
+                  {uniqueStartTimes
+                    .find((item) => item.start_time === selectedSlot.start_time)
+                    ?.employees.map((employee) => {
+                      const isChosen = selectedSlot.employee_id === employee.id
+                      return (
+                        <button
+                          key={employee.id || "any"}
+                          type="button"
+                          onClick={() => setSelectedSlot({ ...selectedSlot, employee_id: employee.id, employee_name: employee.name })}
+                          className={`flex items-center justify-between rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                            isChosen
+                              ? "bg-[#db2777]/10 border-[#db2777] text-[#db2777]"
+                              : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                          }`}
+                        >
+                          <span>{employee.name}</span>
+                          {isChosen && <Check className="h-3.5 w-3.5" />}
+                        </button>
+                      )
+                    })}
                 </div>
               </div>
             )}
-          </section>
 
-          <section id="services" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Services</h2>
-              {servicesLoading && <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />}
+            {/* Notes input */}
+            <div className="space-y-1.5 pt-2">
+              <label className="block text-xs font-bold text-neutral-600">Booking Notes (Optional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Any specific instructions or preferences for your booking..."
+                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-medium"
+              />
             </div>
-            <div className="space-y-5">
-              {categories.map((category) => (
-                <div key={category.id || "uncategorized"} className="space-y-2">
-                  <h3 className="text-sm font-semibold text-neutral-700">{category.name}</h3>
-                  {category.services.map((service: Service) => {
-                    const selected = selectedServiceIds.includes(service.id)
-                    return (
-                      <button
-                        key={service.id}
-                        onClick={() => toggleService(service.id)}
-                        className={`w-full rounded-[16px] border p-4 text-left transition ${selected
-                          ? "border-[#dca6b7] bg-[#fff2f6]"
-                          : "border-[#f0e3e8] bg-white hover:bg-[#fff9fb]"
-                          }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-neutral-900">{service.name}</p>
-                            <p className="mt-1 text-xs text-neutral-500">{service.duration_minutes} min</p>
-                            {service.description && <p className="mt-2 text-sm leading-5 text-neutral-600">{service.description}</p>}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-neutral-900">Rs {Number(service.min_price || 0).toFixed(0)}</span>
-                            <span
-                              className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? "border-[#c77f95] bg-[#e8b9c5] text-neutral-900" : "border-neutral-300"
-                                }`}
-                            >
-                              {selected ? <Check className="h-3.5 w-3.5" /> : null}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
+          </div>
+        )}
+      </section>
+
+      {/* ── 5. REVIEWS SECTION ── */}
+      <section id="reviews" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div>
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Feedback</p>
+          <h2 className="text-lg font-bold text-neutral-800">Reviews &amp; Ratings</h2>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-[220px_1fr]">
+          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 flex flex-col items-center justify-center text-center">
+            <p className="text-4xl font-extrabold text-neutral-900 tracking-tight">
+              {Number(business.average_rating || 0).toFixed(1)}
+            </p>
+            <p className="mt-1 text-[10px] font-bold text-neutral-400 uppercase">{reviews?.total || 0} Reviews</p>
+            <div className="mt-4 space-y-1.5 w-full">
+              {ratingBreakdown.map((bucket) => (
+                <div key={bucket.rating} className="grid grid-cols-[12px_1fr_12px] items-center gap-2 text-[10px] font-bold text-neutral-500">
+                  <span>{bucket.rating}</span>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                    <div className="h-full bg-[#db2777]" style={{ width: `${bucket.percentage}%` }} />
+                  </div>
+                  <span>{bucket.count}</span>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          <section id="hours" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Work hours &amp; address</h2>
-            <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-2">
-                {dayLabels.map((day) => (
-                  <div key={day} className="flex items-center justify-between rounded-md border border-[#f1e6ea] bg-[#faf5f7] px-3 py-2">
-                    <span className="text-sm text-neutral-600">{day}</span>
-                    <span className="text-sm font-medium text-neutral-900">
-                      {activeBranch?.opening_time && activeBranch?.closing_time
-                        ? `${formatTime(activeBranch.opening_time)} - ${formatTime(activeBranch.closing_time)}`
-                        : "Hours not listed"}
-                    </span>
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+            {(reviews?.items ?? []).slice(0, 8).map((review) => (
+              <div key={review.id} className="rounded-2xl border border-neutral-100 p-4 space-y-1 bg-white">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-neutral-800">{review.customer_name || "Verified Customer"}</p>
+                    <p className="text-[10px] text-neutral-400 font-medium">{formatDate(review.created_at.slice(0, 10))}</p>
                   </div>
-                ))}
-              </div>
-              <div className="rounded-[16px] border border-[#f1e6ea] bg-gradient-to-br from-[#f6edf1] via-[#f2f4f8] to-[#eef3f8] p-4 flex flex-col justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900">{activeBranch?.name || "Main branch"}</p>
-                  <p className="mt-2 text-sm text-neutral-600">{activeBranch?.address || business.address || "Address not available"}</p>
-                </div>
-                {activeBranch?.latitude !== null && activeBranch?.latitude !== undefined &&
-                 activeBranch?.longitude !== null && activeBranch?.longitude !== undefined ? (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${activeBranch.latitude},${activeBranch.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-white border border-[#f1e6ea] shadow-sm hover:shadow-md transition text-xs font-bold text-neutral-800 hover:text-neutral-950"
-                  >
-                    <MapPin className="h-4 w-4 text-[#e8b9c5]" />
-                    Open in Google Maps
-                  </a>
-                ) : (
-                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-neutral-600">
-                    <Search className="h-4 w-4" />
-                    Coordinates available on map view
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-          <section id="reviews" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Reviews</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1">
-              <div className="rounded-[16px] border border-[#f1e5ea] bg-[#faf5f7] p-4">
-                <p className="text-4xl font-semibold tracking-[-1px] text-neutral-900">{Number(business.average_rating || 0).toFixed(1)}</p>
-                <p className="mt-1 text-xs text-neutral-500">{reviews?.total || 0} reviews</p>
-                <div className="mt-4 space-y-2">
-                  {ratingBreakdown.map((bucket) => (
-                    <div key={bucket.rating} className="grid grid-cols-[18px_minmax(0,1fr)_20px] items-center gap-2 text-xs text-neutral-600">
-                      <span>{bucket.rating}</span>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[#f0e3e8]">
-                        <div className="h-full bg-[#e3a9bb]" style={{ width: `${bucket.percentage}%` }} />
-                      </div>
-                      <span>{bucket.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {(reviews?.items ?? []).slice(0, 5).map((review) => (
-                  <div key={review.id} className="rounded-[14px] border border-[#f1e5ea] bg-white p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-neutral-900">{review.customer_name || "Customer"}</p>
-                        <p className="text-xs text-neutral-500">{formatDate(review.created_at.slice(0, 10))}</p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2 py-1 text-xs font-semibold text-neutral-700">
-                        <Star className="h-3.5 w-3.5 fill-[#e5a6bb] text-[#e5a6bb]" />
-                        {review.rating}
-                      </span>
-                    </div>
-                    {review.comment && <p className="mt-2 text-sm leading-5 text-neutral-600">{review.comment}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-          <section className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="font-mono text-xs text-neutral-500">appointment</p>
-                <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Book a slot</h2>
-              </div>
-              {slotsLoading ? <Loader2 className="h-5 w-5 animate-spin text-neutral-500" /> : null}
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700">Branch</label>
-                <select
-                  value={activeBranchId}
-                  onChange={(event) => {
-                    setSelectedBranchId(event.target.value)
-                    setSelectedSlot(null)
-                  }}
-                  className="w-full rounded-full border border-[#eadde2] bg-white px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#dca7b5]"
-                >
-                  {branches.map((branch: Branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700">Date</label>
-                <input
-                  type="date"
-                  min={today()}
-                  value={bookingDate}
-                  onChange={(event) => {
-                    setBookingDate(event.target.value)
-                    setSelectedSlot(null)
-                  }}
-                  className="w-full rounded-full border border-[#eadde2] bg-white px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#dca7b5]"
-                />
-              </div>
-
-              <div className="rounded-[14px] border border-[#f1e5ea] bg-[#faf5f7] p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Selected services</span>
-                  <span className="font-semibold text-neutral-900">{selectedServices.length}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="inline-flex items-center gap-1.5 text-neutral-500">
-                    <Clock className="h-4 w-4" />
-                    Duration
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2.5 py-0.5 text-[10px] font-extrabold text-[#db2777]">
+                    <Star className="h-3 w-3 fill-[#db2777] text-[#db2777]" />
+                    {review.rating}
                   </span>
-                  <span className="font-semibold text-neutral-900">{totalDuration || 0} min</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-neutral-500">Estimated total</span>
-                  <span className="font-semibold text-neutral-900">Rs {totalPrice.toFixed(0)}</span>
+                {review.comment && <p className="text-xs text-neutral-600 leading-relaxed pt-1">{review.comment}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. WORKSPACE PORTFOLIO GALLERY ── */}
+      {gallery && gallery.length > 0 && (
+        <section className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-3">
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Showcase</p>
+            <h2 className="text-lg font-bold text-neutral-800">Workspace Portfolio</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {gallery.map((photo) => (
+              <div
+                key={photo.id}
+                onClick={() => setLightboxUrl(photo.url)}
+                className="aspect-[4/3] rounded-2xl overflow-hidden border border-neutral-100 cursor-pointer group relative shadow-sm"
+              >
+                <img
+                  src={photo.url}
+                  alt="Portfolio showcase"
+                  className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
+                  <span className="text-[9px] text-white font-extrabold bg-neutral-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    Zoom
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-neutral-700">Available times</label>
-                {selectedServiceIds.length === 0 ? (
-                  <p className="rounded-[14px] border border-dashed border-[#e6d8dd] p-3 text-sm text-neutral-500">
-                    Select at least one service to see slots.
-                  </p>
-                ) : uniqueStartTimes.length === 0 && !slotsLoading ? (
-                  <p className="rounded-[14px] border border-dashed border-[#e6d8dd] p-3 text-sm text-neutral-500">
-                    No slots available for this date and branch.
-                  </p>
+      {/* ── 7. ABOUT SECTION ── */}
+      <section id="about" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div>
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Contact &amp; Bio</p>
+          <h2 className="text-lg font-bold text-neutral-800">About the Business</h2>
+        </div>
+        <div className="grid md:grid-cols-[280px_1fr] gap-4">
+          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 space-y-3">
+            <h3 className="text-xs font-bold text-neutral-800 border-b border-neutral-100 pb-1.5">Direct Contacts</h3>
+            <div className="space-y-2 text-xs font-semibold text-neutral-600">
+              {business.phone && (
+                <p className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-neutral-400" />
+                  {business.phone}
+                </p>
+              )}
+              {business.email && <p className="truncate">{business.email}</p>}
+              {activeBranch?.address && (
+                <p className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
+                  {activeBranch.address}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col justify-center">
+            <p className="text-xs leading-relaxed text-neutral-600">
+              {business.description || "This curated studio offers top-tier specialists, high quality raw products, and a calm, quiet atmosphere designed to yield premium appointment results."}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 8. HOURS & ADDRESS MAP ── */}
+      <section id="hours" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div>
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Operations</p>
+          <h2 className="text-lg font-bold text-neutral-800">Working Hours &amp; Location</h2>
+        </div>
+        <div className="grid md:grid-cols-[1fr_320px] gap-5">
+          <div className="grid sm:grid-cols-2 gap-2">
+            {dayLabels.map((day) => (
+              <div key={day} className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50/50 px-3.5 py-2.5">
+                <span className="text-xs font-bold text-neutral-600">{day}</span>
+                <span className="text-xs font-bold text-neutral-800">
+                  {activeBranch?.opening_time && activeBranch?.closing_time
+                    ? `${formatTime(activeBranch.opening_time)} - ${formatTime(activeBranch.closing_time)}`
+                    : "Closed"}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-neutral-150 bg-neutral-50/30 p-4 flex flex-col justify-between space-y-4">
+            <div>
+              <p className="text-xs font-bold text-neutral-800">{activeBranch?.name || "Main branch"}</p>
+              <p className="mt-1 text-xs text-neutral-500">{activeBranch?.address || business.address || "Location coordinate mapping not available"}</p>
+            </div>
+            {activeBranch?.latitude !== null && activeBranch?.latitude !== undefined &&
+             activeBranch?.longitude !== null && activeBranch?.longitude !== undefined ? (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${activeBranch.latitude},${activeBranch.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md transition text-xs font-extrabold text-neutral-800"
+              >
+                <MapPin className="h-4 w-4 text-[#db2777]" />
+                Open Google Maps Map
+              </a>
+            ) : (
+              <p className="text-xs text-neutral-400 font-semibold flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5" />
+                Coords listed on checkout picker
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 9. MEET THE TEAM SECTION ── */}
+      <section id="team" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Specialists</p>
+            <h2 className="text-lg font-bold text-neutral-800">Meet the Team</h2>
+          </div>
+          <Users className="h-4.5 w-4.5 text-neutral-400" />
+        </div>
+        {teamMembers.length === 0 ? (
+          <p className="text-xs text-neutral-400 font-semibold text-center py-4">
+            Team specialist profiles will appear here once service schedules are configured.
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+            {teamMembers.map((member) => (
+              <div key={member.id} className="text-center space-y-2">
+                {member.photo ? (
+                  <img src={member.photo} alt={member.name} className="mx-auto h-16 w-16 rounded-full object-cover border-2 border-white shadow-md" />
                 ) : (
-                  <div className="space-y-3">
-                    <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto pr-1">
-                      {uniqueStartTimes.map((timeInfo) => {
-                        const selected = selectedSlot?.start_time === timeInfo.start_time
-                        return (
-                          <button
-                            key={timeInfo.start_time}
-                            onClick={() => {
-                              setSelectedSlot({
-                                employee_id: null,
-                                employee_name: "Any specialist",
-                                start_time: timeInfo.start_time,
-                                end_time: timeInfo.end_time
-                              })
-                            }}
-                            className={`rounded-full border px-3 py-2 text-center text-sm transition ${selected
-                              ? "border-[#d79aab] bg-[#e8b9c5] text-neutral-900"
-                              : "border-[#ece0e5] bg-white text-neutral-700 hover:bg-[#fff5f8]"
-                              }`}
-                          >
-                            {formatTime(timeInfo.start_time)}
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    {selectedSlot ? (
-                      <div className="rounded-[14px] border border-[#ece0e5] bg-white p-3">
-                        <label className="mb-2 block text-xs font-semibold text-neutral-600">Specialist preference</label>
-                        <div className="space-y-1.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedSlot({
-                                ...selectedSlot,
-                                employee_id: null,
-                                employee_name: "Any specialist"
-                              })
-                            }
-                            className={`flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left text-xs transition ${selectedSlot.employee_id === null
-                              ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
-                              : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
-                              }`}
-                          >
-                            No preference
-                            {selectedSlot.employee_id === null ? <Check className="h-3.5 w-3.5" /> : null}
-                          </button>
-
-                          {uniqueStartTimes
-                            .find((item) => item.start_time === selectedSlot.start_time)
-                            ?.employees.map((employee) => {
-                              const isChosen = selectedSlot.employee_id === employee.id
-                              return (
-                                <button
-                                  key={`${employee.id ?? "any"}-${employee.name}`}
-                                  type="button"
-                                  onClick={() =>
-                                    setSelectedSlot({
-                                      ...selectedSlot,
-                                      employee_id: employee.id,
-                                      employee_name: employee.name
-                                    })
-                                  }
-                                  className={`flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left text-xs transition ${isChosen
-                                    ? "border-[#d79aab] bg-[#fff2f6] text-neutral-900"
-                                    : "border-[#ece0e5] text-neutral-600 hover:bg-[#fff8fa]"
-                                    }`}
-                                >
-                                  {employee.name}
-                                  {isChosen ? <Check className="h-3.5 w-3.5" /> : null}
-                                </button>
-                              )
-                            })}
-                        </div>
-                      </div>
-                    ) : null}
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#db2777]/10 text-xs font-extrabold text-[#db2777]">
+                    {initials(member.name)}
                   </div>
                 )}
+                <p className="truncate text-[10px] font-extrabold text-neutral-700">{member.name}</p>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700">Notes</label>
-                <textarea
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  rows={3}
-                  placeholder="Any preference or detail for the business"
-                  className="w-full resize-none rounded-[14px] border border-[#eadde2] bg-white px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#dca7b5]"
-                />
-              </div>
-
-              {bookingMutation.error ? (
-                <div className="rounded-[14px] border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                  {bookingMutation.error instanceof Error ? bookingMutation.error.message : "Could not create booking."}
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="rounded-[14px] border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-                  {successMessage}
-                </div>
-              ) : null}
-
-              <button
-                onClick={handleBook}
-                disabled={!selectedSlot || selectedServiceIds.length === 0 || bookingMutation.isPending}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-900 disabled:opacity-60"
-              >
-                {bookingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-                {isAuthenticated ? "Confirm booking" : "Login to book"}
-              </button>
-
+      {/* ── 10. OTHER SALONS NEARBY (Moved safely to the very bottom to avoid losing customer conversion) ── */}
+      <section className="rounded-[24px] border border-neutral-100 bg-[#fbfdfc] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-4">
+        <div>
+          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Recommendations</p>
+          <h2 className="text-lg font-bold text-neutral-800">Other Salons Nearby</h2>
+        </div>
+        {nearbyBusinesses.length === 0 ? (
+          <p className="text-xs text-neutral-400 font-semibold text-center">No nearby recommendations yet.</p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {nearbyBusinesses.map((item: PublicBusiness) => (
               <Link
-                to="/customer/bookings"
-                className="flex items-center justify-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
+                key={item.id}
+                to={`/customer/businesses/${item.slug || item.id}`}
+                className="flex items-center gap-3.5 rounded-2xl border border-neutral-200 bg-white p-3.5 transition hover:bg-neutral-50 shadow-sm hover:shadow"
               >
-                <MessageSquare className="h-4 w-4" />
-                Manage existing bookings
+                <img
+                  src={item.cover_url || item.logo_url || heroFallback}
+                  alt={item.name}
+                  className="h-16 w-20 rounded-xl object-cover shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-extrabold text-neutral-800">{item.name}</p>
+                  <p className="truncate text-[10px] text-neutral-400 font-semibold">{item.address || item.city || "Address not listed"}</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 bg-neutral-50 px-2 py-0.5 rounded-full">
+                    <Star className="h-3 w-3 fill-[#ffcc00] text-[#ffcc00]" />
+                    {Number(item.average_rating || 0).toFixed(1)} &bull; {item.review_count} reviews
+                  </p>
+                </div>
               </Link>
-            </div>
-          </section>
-          <section id="team" className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Meet the team</h2>
-              <Users className="h-5 w-5 text-neutral-400" />
-            </div>
-            {teamMembers.length === 0 ? (
-              <p className="text-sm text-neutral-500">Specialist profiles will appear here once services are assigned.</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-3">
-                {teamMembers.map((member) => (
-                  <div key={member.id} className="text-center">
-                    {member.photo ? (
-                      <img src={member.photo} alt={member.name} className="mx-auto h-14 w-14 rounded-full object-cover ring-2 ring-white" />
-                    ) : (
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f3d8e2] text-sm font-semibold text-neutral-800">
-                        {initials(member.name)}
-                      </div>
-                    )}
-                    <p className="mt-2 truncate text-xs font-semibold text-neutral-800">{member.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-
-
-          <section className="rounded-[22px] border border-white/70 bg-white/90 p-5 shadow-[0px_10px_22px_-18px_rgba(24,14,18,0.34)]">
-            <h2 className="text-xl font-semibold tracking-[-0.4px] text-neutral-900">Other salons nearby</h2>
-            {nearbyBusinesses.length === 0 ? (
-              <p className="mt-3 text-sm text-neutral-500">No nearby recommendations yet.</p>
-            ) : (
-              <div className="mt-4 grid gap-3">
-                {nearbyBusinesses.map((item: PublicBusiness) => (
-                  <Link
-                    key={item.id}
-                    to={`/customer/businesses/${item.slug || item.id}`}
-                    className="flex items-center gap-3 rounded-[14px] border border-[#f1e5ea] bg-white p-3 transition hover:bg-[#fff7fa]"
-                  >
-                    <img
-                      src={item.cover_url || item.logo_url || heroFallback}
-                      alt={item.name}
-                      className="h-16 w-20 rounded-[10px] object-cover"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-neutral-900">{item.name}</p>
-                      <p className="truncate text-xs text-neutral-500">{item.address || item.city || "Address not listed"}</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-xs text-neutral-600">
-                        <Star className="h-3.5 w-3.5 fill-[#e5a6bb] text-[#e5a6bb]" />
-                        {Number(item.average_rating || 0).toFixed(1)} • {item.review_count} reviews
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-
-        </aside>
-      </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Fullscreen Lightbox Preview Overlay */}
       {lightboxUrl && (

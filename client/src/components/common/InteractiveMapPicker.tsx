@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { Search, MapPin, Loader2, Navigation, Check } from "lucide-react"
+import { Search, MapPin, Loader2, Navigation, Check, AlertTriangle } from "lucide-react"
 
 declare global {
   interface Window {
-    L?: any
+    google?: any
   }
 }
 
@@ -30,9 +30,12 @@ export default function InteractiveMapPicker({
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const markerInstance = useRef<any>(null)
+  const autocompleteService = useRef<any>(null)
+  const geocoderInstance = useRef<any>(null)
   
   // Script / Asset loading state
-  const [leafletLoaded, setLeafletLoaded] = useState(false)
+  const [googleLoaded, setGoogleLoaded] = useState(false)
+  const [apiKeyMissing, setApiKeyMissing] = useState(false)
 
   // Search & suggestions states
   const [searchQuery, setSearchQuery] = useState(initialAddress)
@@ -47,169 +50,210 @@ export default function InteractiveMapPicker({
       : null
   )
 
-  // 1. Dynamic CDN asset injection for Leaflet (zero packaging bloat)
+  // 1. Dynamic Script Ingestion for Google Maps API
   useEffect(() => {
-    if (window.L) {
-      setLeafletLoaded(true)
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
+      setApiKeyMissing(true)
       return
     }
 
-    // Inject stylesheet
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    link.id = "leaflet-css"
-    document.head.appendChild(link)
+    if (window.google?.maps) {
+      setGoogleLoaded(true)
+      return
+    }
 
-    // Inject script
+    // Check if script is already present in document
+    const existingScript = document.getElementById("google-maps-js")
+    if (existingScript) {
+      setGoogleLoaded(true)
+      return
+    }
+
+    // Inject script tag
     const script = document.createElement("script")
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    script.id = "leaflet-js"
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+    script.id = "google-maps-js"
+    script.async = true
+    script.defer = true
     script.onload = () => {
-      setLeafletLoaded(true)
+      setGoogleLoaded(true)
+    }
+    script.onerror = () => {
+      console.error("Google Maps API script load failed.")
     }
     document.head.appendChild(script)
-
-    return () => {
-      // Keep Leaflet globally to avoid reload overhead on subsequent mounts
-    }
   }, [])
 
-  // 2. Initialize Leaflet Map
+  // 2. Initialize Google Map & Services
   useEffect(() => {
-    if (!leafletLoaded || !mapRef.current) return
+    if (!googleLoaded || !mapRef.current) return
 
-    const L = window.L
+    const google = window.google
 
     // Default coordinates: Connaught Place, New Delhi if not set
     const defaultLat = selectedCoords?.lat ?? 28.6139
     const defaultLng = selectedCoords?.lng ?? 77.2090
     const zoomLevel = selectedCoords ? 16 : 13
 
-    // Clean up previous map instance if it exists
-    if (mapInstance.current) {
-      mapInstance.current.remove()
-      mapInstance.current = null
-      markerInstance.current = null
-    }
+    // Initialize Services
+    autocompleteService.current = new google.maps.places.AutocompleteService()
+    geocoderInstance.current = new google.maps.Geocoder()
 
     // Initialize Map
-    mapInstance.current = L.map(mapRef.current, {
-      zoomControl: true
-    }).setView([defaultLat, defaultLng], zoomLevel)
+    const mapOptions = {
+      center: { lat: defaultLat, lng: defaultLng },
+      zoom: zoomLevel,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      styles: [
+        {
+          featureType: "administrative",
+          elementType: "geometry",
+          stylers: [{ visibility: "on" }]
+        },
+        {
+          featureType: "poi",
+          stylers: [{ visibility: "off" }]
+        },
+        {
+          featureType: "road",
+          elementType: "labels.icon",
+          stylers: [{ visibility: "off" }]
+        },
+        {
+          featureType: "transit",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
+    }
 
-    // Set map tiles (premium clean OpenStreetMap style)
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: "abcd",
-      maxZoom: 20
-    }).addTo(mapInstance.current)
+    mapInstance.current = new google.maps.Map(mapRef.current, mapOptions)
 
-    // Setup custom icon (since Leaflet default markers fail under asset bundling)
-    const customIcon = L.icon({
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34]
+    // Initialize Draggable Marker
+    markerInstance.current = new google.maps.Marker({
+      position: { lat: defaultLat, lng: defaultLng },
+      map: mapInstance.current,
+      draggable: true,
+      animation: google.maps.Animation.DROP
     })
 
-    // Initialize Marker if coords exist or default
-    markerInstance.current = L.marker([defaultLat, defaultLng], {
-      icon: customIcon,
-      draggable: true
-    }).addTo(mapInstance.current)
+    // Handle Marker dragend event
+    markerInstance.current.addListener("dragend", () => {
+      const position = markerInstance.current.getPosition()
+      if (!position) return
 
-    // Handle Marker dragging events
-    markerInstance.current.on("dragend", async (e: any) => {
-      const marker = e.target
-      const position = marker.getLatLng()
-      
-      const newLat = Number(position.lat.toFixed(6))
-      const newLng = Number(position.lng.toFixed(6))
+      const newLat = Number(position.lat().toFixed(6))
+      const newLng = Number(position.lng().toFixed(6))
       setSelectedCoords({ lat: newLat, lng: newLng })
 
-      // Reverse geocode to update address & city automatically!
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json&addressdetails=1`
-        )
-        const data = await res.json()
-        if (data && data.address) {
-          const road = data.address.road || data.address.suburb || ""
-          const area = data.address.neighbourhood || data.address.residential || ""
-          const addressText = data.address.shop || data.address.amenity || data.address.building 
-            ? `${data.address.shop || data.address.amenity || data.address.building}, ${road || area}`.replace(/(^[,\s]+)|([,\s]+$)/g, "")
-            : data.display_name.split(",").slice(0, 3).join(",").trim()
+      // Reverse geocode
+      if (geocoderInstance.current) {
+        geocoderInstance.current.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
+          if (status === "OK" && results && results[0]) {
+            const result = results[0]
+            
+            // Parse city from address_components
+            let cityVal = "Delhi"
+            for (const component of result.address_components) {
+              const types = component.types
+              if (types.includes("locality")) {
+                cityVal = component.long_name
+              } else if (types.includes("administrative_area_level_2") && cityVal === "Delhi") {
+                cityVal = component.long_name
+              }
+            }
 
-          const cityText = data.address.city || data.address.town || data.address.suburb || data.address.state || "Delhi"
-          
-          setSearchQuery(addressText)
-          onChange({
-            address: addressText,
-            city: cityText,
-            latitude: newLat,
-            longitude: newLng
-          })
-        } else {
-          // If reverse geocoding is empty, keep old address text but send new coords
-          onChange({
-            address: searchQuery || `Location near (${newLat}, ${newLng})`,
-            city: initialCity || "Delhi",
-            latitude: newLat,
-            longitude: newLng
-          })
-        }
-      } catch (err) {
-        console.error("Reverse geocoding failed", err)
-        onChange({
-          address: searchQuery || `Location at (${newLat}, ${newLng})`,
-          city: initialCity || "Delhi",
-          latitude: newLat,
-          longitude: newLng
+            const formattedAddress = result.formatted_address
+            setSearchQuery(formattedAddress)
+            onChange({
+              address: formattedAddress,
+              city: cityVal,
+              latitude: newLat,
+              longitude: newLng
+            })
+          } else {
+            onChange({
+              address: searchQuery || `Location near (${newLat}, ${newLng})`,
+              city: initialCity || "Delhi",
+              latitude: newLat,
+              longitude: newLng
+            })
+          }
         })
       }
     })
 
-    // Also support clicking map to position pin
-    mapInstance.current.on("click", (e: any) => {
-      const newLat = Number(e.latlng.lat.toFixed(6))
-      const newLng = Number(e.latlng.lng.toFixed(6))
+    // Handle Map Click to place pin
+    mapInstance.current.addListener("click", (e: any) => {
+      if (!e.latLng) return
+
+      const clickedLat = e.latLng.lat()
+      const clickedLng = e.latLng.lng()
       
-      markerInstance.current.setLatLng([newLat, newLng])
+      markerInstance.current.setPosition({ lat: clickedLat, lng: clickedLng })
+      
+      const newLat = Number(clickedLat.toFixed(6))
+      const newLng = Number(clickedLng.toFixed(6))
       setSelectedCoords({ lat: newLat, lng: newLng })
-      
-      // Trigger a dragend-like update programmatically
-      markerInstance.current.fire("dragend")
+
+      // Reverse geocode
+      if (geocoderInstance.current) {
+        geocoderInstance.current.geocode({ location: { lat: newLat, lng: newLng } }, (results: any, status: any) => {
+          if (status === "OK" && results && results[0]) {
+            const result = results[0]
+            
+            // Parse city from address_components
+            let cityVal = "Delhi"
+            for (const component of result.address_components) {
+              const types = component.types
+              if (types.includes("locality")) {
+                cityVal = component.long_name
+              } else if (types.includes("administrative_area_level_2") && cityVal === "Delhi") {
+                cityVal = component.long_name
+              }
+            }
+
+            const formattedAddress = result.formatted_address
+            setSearchQuery(formattedAddress)
+            onChange({
+              address: formattedAddress,
+              city: cityVal,
+              latitude: newLat,
+              longitude: newLng
+            })
+          }
+        })
+      }
     })
 
-    // Cleanup on unmount
     return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove()
-        mapInstance.current = null
-        markerInstance.current = null
-      }
+      mapInstance.current = null
+      markerInstance.current = null
     }
-  }, [leafletLoaded])
+  }, [googleLoaded])
 
-  // 3. Search Autocomplete Logic (Nominatim Query)
+  // 3. Search Autocomplete via google.maps.places.AutocompleteService
   const performSearch = async (query: string) => {
     if (!query.trim() || query.length < 3) return
+    if (!googleLoaded || !autocompleteService.current) return
+    
     setSearching(true)
     
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`
-      )
-      const data = await res.json()
-      setSuggestions(data || [])
-      setShowDropdown(true)
-    } catch (err) {
-      console.error("Address search failed", err)
-    } finally {
-      setSearching(false)
-    }
+    autocompleteService.current.getPlacePredictions(
+      { input: query },
+      (predictions: any, status: any) => {
+        setSearching(false)
+        if (status === "OK" && predictions) {
+          setSuggestions(predictions)
+          setShowDropdown(true)
+        } else {
+          setSuggestions([])
+          setShowDropdown(false)
+        }
+      }
+    )
   }
 
   // Handle Search Input Change
@@ -230,39 +274,119 @@ export default function InteractiveMapPicker({
     }
   }
 
-  // Select Suggested Address
+  // Select Suggested Address (resolve Place ID)
   const handleSelectSuggestion = (place: any) => {
-    const lat = Number(parseFloat(place.lat).toFixed(6))
-    const lng = Number(parseFloat(place.lon).toFixed(6))
-    
-    // Extract a clear address title
-    const road = place.address.road || place.address.suburb || ""
-    const suburb = place.address.suburb || ""
-    const displayName = place.display_name.split(",").slice(0, 3).join(",").trim()
-    const addressVal = place.address.shop || place.address.amenity || place.address.building 
-      ? `${place.address.shop || place.address.amenity || place.address.building}, ${road || suburb || ""}`
-      : displayName
-      
-    // Extract city
-    const cityVal = place.address.city || place.address.town || place.address.suburb || place.address.state || "Delhi"
+    if (!geocoderInstance.current) return
 
-    setSearchQuery(addressVal)
-    setSelectedCoords({ lat, lng })
-    setShowDropdown(false)
+    geocoderInstance.current.geocode({ placeId: place.place_id }, (results: any, status: any) => {
+      if (status === "OK" && results && results[0]) {
+        const result = results[0]
+        const lat = Number(result.geometry.location.lat().toFixed(6))
+        const lng = Number(result.geometry.location.lng().toFixed(6))
 
-    // Update parent states
-    onChange({
-      address: addressVal,
-      city: cityVal,
-      latitude: lat,
-      longitude: lng
+        // Parse city from address_components
+        let cityVal = "Delhi"
+        for (const component of result.address_components) {
+          const types = component.types
+          if (types.includes("locality")) {
+            cityVal = component.long_name
+          } else if (types.includes("administrative_area_level_2") && cityVal === "Delhi") {
+            cityVal = component.long_name
+          }
+        }
+
+        const formattedAddress = result.formatted_address
+
+        setSearchQuery(formattedAddress)
+        setSelectedCoords({ lat, lng })
+        setShowDropdown(false)
+
+        onChange({
+          address: formattedAddress,
+          city: cityVal,
+          latitude: lat,
+          longitude: lng
+        })
+
+        // Center map and move marker
+        if (mapInstance.current && markerInstance.current) {
+          mapInstance.current.setCenter({ lat, lng })
+          mapInstance.current.setZoom(16)
+          markerInstance.current.setPosition({ lat, lng })
+        }
+      }
     })
+  }
 
-    // Move map and marker pin
-    if (mapInstance.current && markerInstance.current) {
-      mapInstance.current.setView([lat, lng], 16)
-      markerInstance.current.setLatLng([lat, lng])
-    }
+  // Render Fallback if environment variables are missing
+  if (apiKeyMissing) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex gap-3 text-xs text-amber-800">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+          <div>
+            <p className="font-semibold mb-1">Google Maps API Configuration Needed</p>
+            <p className="leading-relaxed mb-2">
+              Please define your Google Maps API key in the environment configuration file:
+            </p>
+            <code className="block bg-amber-100 p-2 rounded-md font-mono select-all">
+              VITE_GOOGLE_MAPS_API_KEY=AIzaSy...
+            </code>
+          </div>
+        </div>
+
+        {/* Fallback Form fields so application functionality is not blocked */}
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3.5">
+          <p className="text-xs font-semibold text-gray-700">Enter Location Manually</p>
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[10px] text-gray-500 font-medium mb-1">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                defaultValue={selectedCoords?.lat || ""}
+                onChange={(e) => {
+                  const lat = Number(e.target.value)
+                  if (!isNaN(lat)) {
+                    setSelectedCoords(prev => ({ lat, lng: prev?.lng ?? 77.2090 }))
+                    onChange({
+                      address: searchQuery,
+                      city: initialCity || "Delhi",
+                      latitude: lat,
+                      longitude: selectedCoords?.lng ?? 77.2090
+                    })
+                  }
+                }}
+                placeholder="28.6139"
+                className="w-full text-xs px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-500 font-medium mb-1">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                defaultValue={selectedCoords?.lng || ""}
+                onChange={(e) => {
+                  const lng = Number(e.target.value)
+                  if (!isNaN(lng)) {
+                    setSelectedCoords(prev => ({ lat: prev?.lat ?? 28.6139, lng }))
+                    onChange({
+                      address: searchQuery,
+                      city: initialCity || "Delhi",
+                      latitude: selectedCoords?.lat ?? 28.6139,
+                      longitude: lng
+                    })
+                  }
+                }}
+                placeholder="77.2090"
+                className="w-full text-xs px-3 py-2 border rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -314,9 +438,9 @@ export default function InteractiveMapPicker({
                 <MapPin className="h-4.5 w-4.5 text-gray-400 mt-0.5 shrink-0" />
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900 truncate">
-                    {place.address.shop || place.address.amenity || place.address.building || place.display_name.split(",")[0]}
+                    {place.structured_formatting?.main_text || place.description.split(",")[0]}
                   </p>
-                  <p className="text-[10px] text-gray-500 truncate mt-0.5">{place.display_name}</p>
+                  <p className="text-[10px] text-gray-500 truncate mt-0.5">{place.description}</p>
                 </div>
               </button>
             ))}
@@ -334,14 +458,14 @@ export default function InteractiveMapPicker({
 
       {/* ── Interactive Map Box Canvas ── */}
       <div className="relative">
-        {!leafletLoaded && (
+        {!googleLoaded && (
           <div className="w-full h-[220px] rounded-lg bg-gray-50 border border-gray-150 flex flex-col items-center justify-center text-gray-400 gap-2.5">
             <Loader2 className="h-8 w-8 animate-spin text-neutral-900" />
             <p className="text-xs font-medium">Loading geographical maps engine...</p>
           </div>
         )}
 
-        {leafletLoaded && (
+        {googleLoaded && (
           <div className="relative w-full h-[220px] rounded-lg overflow-hidden border border-gray-200 shadow-inner group">
             {/* Map Div */}
             <div ref={mapRef} className="w-full h-full z-10" />
@@ -357,3 +481,4 @@ export default function InteractiveMapPicker({
     </div>
   )
 }
+
