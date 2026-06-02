@@ -1,16 +1,17 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { BadgeCheck, MapPin, Search, Star, Heart, Sparkles } from "lucide-react"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { searchPublicBusinessesApi } from "../../api/public.api"
+import { listActivePromotionsApi } from "../../api/promotions.api"
 import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 
 // Premium category structure matching the mockup icons
 const categoryItems = [
-  { label: "Salon & Spa", value: "salon", color: "bg-[#fff6e6] text-[#ff9900] border-[#ffe6b3]", icon: "✨" },
-  { label: "Cleaning", value: "spa", color: "bg-[#e6f9f3] text-[#00b386] border-[#b3f0db]", icon: "🧼" },
-  { label: "Handyman", value: "professional", color: "bg-[#fffdeb] text-[#e6b800] border-[#fff799]", icon: "🛠️" },
+  { label: "Salon ", value: "salon", color: "bg-[#fff6e6] text-[#ff9900] border-[#ffe6b3]", icon: "✨" },
+  { label: "Spa", value: "spa", color: "bg-[#e6f9f3] text-[#00b386] border-[#b3f0db]", icon: "🧼" },
+  { label: "Professional", value: "professional", color: "bg-[#fffdeb] text-[#e6b800] border-[#fff799]", icon: "🛠️" },
   { label: "Nails", value: "nail_studio", color: "bg-[#ebf8ff] text-[#007acc] border-[#99d6ff]", icon: "💅" },
   { label: "Barber", value: "barber", color: "bg-[#f9ebff] text-[#ac33db] border-[#e6b3ff]", icon: "💈" }
 ]
@@ -20,6 +21,7 @@ export default function CustomerExplorePage() {
   const [city, setCity] = useState("")
   const [type, setType] = useState("")
   const [favorites, setFavorites] = useState<string[]>([])
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   const searchParams = useMemo(
     () => ({
@@ -36,9 +38,22 @@ export default function CustomerExplorePage() {
     queryFn: () => searchPublicBusinessesApi(searchParams)
   })
 
-
+  // Fetch active promotions
+  const { data: promotions = [], isLoading: promotionsLoading } = useQuery({
+    queryKey: ["public-promotions"],
+    queryFn: listActivePromotionsApi
+  })
 
   const businesses = data?.items ?? []
+
+  // Auto slide interval for multiple banner campaigns
+  useEffect(() => {
+    if (promotions.length <= 1) return
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % promotions.length)
+    }, 6000)
+    return () => clearInterval(interval)
+  }, [promotions.length])
 
   const toggleFavorite = (e: React.MouseEvent, id: string) => {
     e.preventDefault()
@@ -74,37 +89,99 @@ export default function CustomerExplorePage() {
         </div>
       </div>
 
-      {/* ── 3. Promotional Vivid Mesh Offer Card Banner ── */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00bfff] via-[#33ccff] to-[#80e5ff] p-6 text-white shadow-xl flex items-center justify-between"
-      >
-        {/* Animated Abstract Glass Bubbles */}
-        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-xl -translate-y-12 translate-x-12 pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 h-28 w-28 rounded-full bg-cyan-300/30 blur-lg pointer-events-none" />
-
-        <div className="relative z-10 max-w-lg space-y-2">
-          <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
-            Special Promo
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">
-            Up to 50% Off!
-          </h2>
-          <p className="text-xs text-white/95 max-w-sm">
-            Book home cleaning, premium salon styling, or wellness sessions now to avail the offer.
-          </p>
-          <button className="mt-3 bg-[#ffcc00] hover:bg-[#e6b800] text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition duration-200 active:scale-95">
-            Grab the Offer Now
-          </button>
+      {/* ── 3. Dynamic Banners Carousel or Static Fallback ── */}
+      {promotionsLoading ? (
+        <div className="w-full h-44 sm:h-56 bg-neutral-50 rounded-3xl flex items-center justify-center border border-neutral-100 shadow-inner">
+          <ThreeDotsLoader color="bg-[#db2777]" size="w-2.5 h-2.5" />
         </div>
+      ) : promotions.length > 0 ? (
+        <div className="relative w-full overflow-hidden rounded-[24px] shadow-vercel-md bg-neutral-50 border border-neutral-100 flex items-center justify-center">
+          {/* Main responsive sliding container */}
+          <div className="relative w-full aspect-[3/1] sm:max-h-[300px] md:max-h-[350px] overflow-hidden">
+            <AnimatePresence mode="wait">
+              {promotions.map((promo, idx) => {
+                if (idx !== currentSlide) return null
+                return (
+                  <motion.div
+                    key={promo.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    <Link
+                      to={
+                        promo.redirect_slug.startsWith("http") || promo.redirect_slug.startsWith("/")
+                          ? promo.redirect_slug
+                          : `/customer/businesses/${promo.redirect_slug}`
+                      }
+                      className="block w-full h-full focus:outline-none"
+                    >
+                      <picture className="w-full h-full">
+                        {/* Mobile portrait crop image */}
+                        <source media="(max-width: 640px)" srcSet={promo.mobile_url || promo.desktop_url} />
+                        {/* Desktop landscape crop image */}
+                        <img
+                          src={promo.desktop_url}
+                          alt={promo.title}
+                          className="w-full h-full object-cover select-none"
+                        />
+                      </picture>
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
 
-        {/* Right side floating graphics (Mock Illustration Container) */}
-        <div className="relative hidden md:flex items-center justify-center w-40 h-32 pr-4 z-10">
-          <div className="absolute text-5xl animate-bounce duration-1000">🧼🧴✨</div>
+            {/* Slider Dots */}
+            {promotions.length > 1 && (
+              <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5 z-10">
+                {promotions.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-5 bg-white shadow-md" : "w-2 bg-white/60 hover:bg-white"
+                      }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00bfff] via-[#33ccff] to-[#80e5ff] p-6 text-white shadow-xl flex items-center justify-between"
+        >
+          {/* Animated Abstract Glass Bubbles */}
+          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-xl -translate-y-12 translate-x-12 pointer-events-none" />
+          <div className="absolute left-1/3 bottom-0 h-28 w-28 rounded-full bg-cyan-300/30 blur-lg pointer-events-none" />
+
+          <div className="relative z-10 max-w-lg space-y-2">
+            <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+              Special Promo
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">
+              Up to 50% Off!
+            </h2>
+            <p className="text-xs text-white/95 max-w-sm">
+              Book home cleaning, premium salon styling, or wellness sessions now to avail the offer.
+            </p>
+            <button className="mt-3 bg-[#ffcc00] hover:bg-[#e6b800] text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition duration-200 active:scale-95">
+              Grab the Offer Now
+            </button>
+          </div>
+
+          {/* Right side floating graphics (Mock Illustration Container) */}
+          <div className="relative hidden md:flex items-center justify-center w-40 h-32 pr-4 z-10">
+            <div className="absolute text-5xl animate-bounce duration-1000">🧼🧴✨</div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── 4. Circular Category Selectors Bar ── */}
       <div className="space-y-3">
@@ -117,9 +194,9 @@ export default function CustomerExplorePage() {
             onClick={() => setType("")}
             className={`flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none`}
           >
-            <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${type === ""
-                ? "bg-neutral-900 text-white border-neutral-950 scale-105"
-                : "bg-white text-neutral-600 border-neutral-100 hover:border-neutral-200"
+            <div className={`h-16 w-16  min-w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${type === ""
+              ? "bg-neutral-900 text-white border-neutral-950"
+              : "bg-white text-neutral-600 border-neutral-100 hover:border-neutral-200"
               }`}>
               🌍
             </div>
@@ -135,8 +212,8 @@ export default function CustomerExplorePage() {
                 className="flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none"
               >
                 <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${isSelected
-                    ? "bg-neutral-900 text-white border-neutral-950 scale-105"
-                    : `${cat.color} hover:brightness-95`
+                  ? "bg-neutral-900 text-white border-neutral-950 scale-105"
+                  : `${cat.color} hover:brightness-95`
                   }`}>
                   {cat.icon}
                 </div>
@@ -228,10 +305,7 @@ export default function CustomerExplorePage() {
 
                       {/* Pricing Row & Action Button */}
                       <div className="pt-3 border-t border-neutral-50 flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] text-neutral-400 font-medium">Price Starts From</p>
-                          <p className="text-sm font-extrabold text-neutral-900">$120 <span className="text-[10px] text-neutral-400 font-normal">/ hr</span></p>
-                        </div>
+
                         <span className="bg-[#00bfff] hover:bg-[#0099cc] text-white px-4.5 py-2 rounded-full text-xs font-bold shadow-md transition duration-200">
                           Book
                         </span>

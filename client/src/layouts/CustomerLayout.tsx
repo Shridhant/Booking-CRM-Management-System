@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom"
-import { CalendarCheck, LogIn, LogOut, Search, UserPlus, Menu, X, Settings } from "lucide-react"
+import { CalendarCheck, LogOut, Search, X, Settings, User, ChevronDown, HelpCircle } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { useQuery } from "@tanstack/react-query"
 import { useAuthStore } from "../store/auth.store"
@@ -12,6 +12,7 @@ export default function CustomerLayout() {
   const { isAuthenticated, user, logout } = useAuthStore()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -65,38 +66,11 @@ export default function CustomerLayout() {
                 <span>Explore</span>
               </NavLink>
 
-              {isAuthenticated && user?.role === "customer" ? (
-                <>
-                  <NavLink
-                    to="/customer/bookings"
-                    className={({ isActive }) =>
-                      `relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition shadow-sm ${
-                        isActive
-                          ? "bg-neutral-950 text-white animate-none"
-                          : "border border-white/80 bg-white/70 text-neutral-600 hover:bg-white hover:text-neutral-950"
-                      }`
-                    }
-                  >
-                    <CalendarCheck className="h-3.5 w-3.5" />
-                    <span>My Bookings</span>
-                    
-                    {/* Pulsing Alert Badge indicators */}
-                    {bookings.length > 0 && (
-                      <span className="bg-[#db2777] text-white text-[9px] font-extrabold h-4.5 min-w-[18px] px-1 rounded-full flex items-center justify-center shadow-inner ml-0.5">
-                        {bookings.length}
-                      </span>
-                    )}
-                    {bookings.length > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#db2777] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#db2777]"></span>
-                      </span>
-                    )}
-                  </NavLink>
-
+              {isAuthenticated ? (
+                <div className="relative">
                   <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-1.5 text-xs font-bold text-neutral-600 hover:bg-white hover:text-neutral-950 transition shadow-sm cursor-pointer"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-1.5 text-xs font-bold text-neutral-600 hover:bg-white hover:text-neutral-950 transition shadow-sm cursor-pointer"
                   >
                     {user?.profile_photo_url ? (
                       <img 
@@ -109,149 +83,230 @@ export default function CustomerLayout() {
                         {user?.name ? user.name.substring(0, 2) : "C"}
                       </div>
                     )}
-                    <span>{user?.name || "Profile"}</span>
+                    <span>{user?.name || "Account"}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
                   </button>
 
-                  <button
-                    onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-4 py-2 text-xs font-bold text-red-600 transition hover:bg-white shadow-sm"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>Sign out</span>
-                  </button>
-                </>
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <>
+                      {/* Click-away backdrop */}
+                      <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                      <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/60 bg-white/95 backdrop-blur-xl p-4 shadow-xl z-50 text-xs text-neutral-700 animate-in fade-in duration-100">
+                        <div className="pb-3 border-b border-neutral-100">
+                          <span className="block font-extrabold text-neutral-950 text-sm">My Account</span>
+                          <span className="block text-neutral-400 font-mono mt-0.5 truncate">{user?.email || user?.phone || "User Details"}</span>
+                        </div>
+                        <div className="py-2 space-y-1">
+                          <Link
+                            to="/customer/bookings"
+                            onClick={() => setIsDropdownOpen(false)}
+                            className="flex items-center justify-between rounded-xl px-3 py-2.5 font-bold hover:bg-neutral-50 text-neutral-700 transition"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <CalendarCheck className="h-4 w-4 text-neutral-500" />
+                              <span>My Bookings</span>
+                            </div>
+                            {bookings.length > 0 && (
+                              <span className="bg-[#db2777] text-white text-[9px] font-extrabold h-4.5 min-w-[18px] px-1 rounded-full flex items-center justify-center shadow-inner">
+                                {bookings.length}
+                              </span>
+                            )}
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false)
+                              setIsSettingsOpen(true)
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 font-bold hover:bg-neutral-50 text-neutral-700 transition text-left cursor-pointer"
+                          >
+                            <Settings className="h-4 w-4 text-neutral-500" />
+                            <span>Account Settings</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false)
+                              alert("For support, contact us at support@bookify.com or call 1-800-BOOKIFY")
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 font-bold hover:bg-neutral-50 text-neutral-700 transition text-left cursor-pointer"
+                          >
+                            <HelpCircle className="h-4 w-4 text-neutral-500" />
+                            <span>FAQs & Support</span>
+                          </button>
+                        </div>
+                        <div className="pt-2 border-t border-neutral-100">
+                          <button
+                            onClick={() => {
+                              setIsDropdownOpen(false)
+                              handleLogout()
+                            }}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 font-bold hover:bg-red-50 text-red-600 transition text-left cursor-pointer"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span>Log Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               ) : (
-                <>
-                  <Link
-                    to="/login?as=customer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-4 py-2 text-xs font-bold text-neutral-600 transition hover:bg-white shadow-sm"
-                  >
-                    <LogIn className="h-3.5 w-3.5" />
-                    <span>Login</span>
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center gap-2 rounded-full bg-neutral-950 px-5 py-2 text-xs font-bold text-white transition hover:bg-neutral-900 shadow-md"
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    <span>Join</span>
-                  </Link>
-                </>
+                <Link
+                  to="/login?as=customer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/70 text-neutral-600 hover:bg-white hover:text-neutral-950 transition shadow-sm cursor-pointer"
+                  title="Login / Join"
+                >
+                  <User className="h-4.5 w-4.5" />
+                </Link>
               )}
             </nav>
 
-            {/* Mobile Menu Burger Icon */}
+            {/* Mobile Account Button / Menu Trigger */}
             <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="h-10 w-10 flex items-center justify-center bg-white border border-white/80 rounded-full shadow-sm text-neutral-700 active:scale-90 transition cursor-pointer relative"
-              >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                {!mobileMenuOpen && bookings.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#db2777] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#db2777]"></span>
-                  </span>
-                )}
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="h-10 w-10 flex items-center justify-center bg-white border border-white/80 rounded-full shadow-sm text-neutral-700 active:scale-90 transition cursor-pointer relative"
+                >
+                  {user?.profile_photo_url ? (
+                    <img 
+                      src={user.profile_photo_url} 
+                      alt="Profile" 
+                      className="h-7 w-7 rounded-full object-cover border border-neutral-100" 
+                    />
+                  ) : (
+                    <div className="h-7 w-7 rounded-full bg-neutral-950 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                      {user?.name ? user.name.substring(0, 2) : "C"}
+                    </div>
+                  )}
+                  {bookings.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#db2777] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#db2777]"></span>
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to="/login?as=customer"
+                  className="h-10 w-10 flex items-center justify-center bg-white border border-white/80 rounded-full shadow-sm text-neutral-600 active:scale-90 transition cursor-pointer"
+                >
+                  <User className="h-5 w-5" />
+                </Link>
+              )}
             </div>
 
           </div>
 
-          {/* ── 2. COLLAPSIBLE MOBILE GRADUAL BLUR BACKDROP MENU ── */}
+          {/* ── 2. COLLAPSIBLE MOBILE ACCOUNT SLIDE OVER DRAWER ── */}
           <AnimatePresence>
             {mobileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: "auto", marginTop: 12 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="md:hidden overflow-hidden rounded-2xl border border-white/50 bg-white/95 backdrop-blur-2xl p-4 shadow-xl space-y-3"
-              >
-                <NavLink
-                  to="/customer"
-                  end
+              <>
+                {/* Backdrop click-away */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition ${
-                      isActive ? "bg-neutral-900 text-white" : "hover:bg-neutral-100 text-neutral-700"
-                    }`
-                  }
+                  className="fixed inset-0 bg-neutral-950 z-40"
+                />
+
+                {/* Slide drawer container */}
+                <motion.div
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 220 }}
+                  className="fixed inset-y-0 right-0 w-full max-w-sm bg-white border-l border-[#ebebeb] z-50 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto text-neutral-800"
                 >
-                  <Search className="h-4.5 w-4.5" />
-                  <span>Explore Services</span>
-                </NavLink>
-
-                {isAuthenticated && user?.role === "customer" ? (
-                  <>
-                    <NavLink
-                      to="/customer/bookings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center justify-between rounded-xl px-4 py-3 text-sm font-bold transition ${
-                          isActive ? "bg-neutral-900 text-white" : "hover:bg-neutral-100 text-neutral-700"
-                        }`
-                      }
-                    >
-                      <div className="flex items-center gap-3">
-                        <CalendarCheck className="h-4.5 w-4.5" />
-                        <span>My Bookings</span>
+                  <div>
+                    {/* Header with Close and Title */}
+                    <div className="flex items-center gap-3 pb-6 border-b border-[#ebebeb] mb-6">
+                      <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2 rounded-full hover:bg-neutral-100 transition text-neutral-600 active:scale-90"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                      <div className="min-w-0">
+                        <h2 className="text-base font-bold tracking-[-0.3px] text-neutral-950">My Account</h2>
+                        <span className="text-[11px] font-mono text-neutral-400 truncate block max-w-[200px]">
+                          {user?.email || user?.phone}
+                        </span>
                       </div>
-                      
-                      {/* Active mobile alerts */}
-                      {bookings.length > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="bg-[#db2777] text-white text-[10px] font-extrabold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center shadow-sm">
-                            {bookings.length}
-                          </span>
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#db2777] opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#db2777]"></span>
-                          </span>
+                    </div>
+
+                    {/* Section Label */}
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-3">
+                      Your Information
+                    </span>
+
+                    {/* Options List */}
+                    <div className="space-y-2 text-xs">
+                      <NavLink
+                        to="/customer/bookings"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center justify-between rounded-xl px-4 py-3 font-bold transition ${
+                            isActive ? "bg-neutral-950 text-white" : "hover:bg-neutral-100 text-neutral-700"
+                          }`
+                        }
+                      >
+                        <div className="flex items-center gap-3">
+                          <CalendarCheck className="h-4.5 w-4.5" />
+                          <span>Order History</span>
                         </div>
-                      )}
-                    </NavLink>
+                        
+                        {/* Active mobile alerts */}
+                        {bookings.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-[#db2777] text-white text-[10px] font-extrabold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center shadow-sm">
+                              {bookings.length}
+                            </span>
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#db2777] opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#db2777]"></span>
+                            </span>
+                          </div>
+                        )}
+                      </NavLink>
 
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                        setIsSettingsOpen(true)
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-neutral-700 hover:bg-neutral-100 text-left cursor-pointer"
-                    >
-                      <Settings className="h-4.5 w-4.5 text-neutral-500" />
-                      <span>Account Settings</span>
-                    </button>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          setIsSettingsOpen(true)
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-bold text-neutral-700 hover:bg-neutral-100 text-left cursor-pointer"
+                      >
+                        <Settings className="h-4.5 w-4.5 text-neutral-500" />
+                        <span>Address Book</span>
+                      </button>
 
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          alert("For support, contact us at support@bookify.com or call 1-800-BOOKIFY")
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-bold text-neutral-700 hover:bg-neutral-100 text-left cursor-pointer"
+                      >
+                        <HelpCircle className="h-4.5 w-4.5 text-neutral-500" />
+                        <span>FAQs & Support</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Footer Sign out */}
+                  <div className="pt-6 border-t border-[#ebebeb] mt-6">
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 text-left cursor-pointer"
+                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 font-bold text-red-600 hover:bg-red-50 text-left cursor-pointer"
                     >
                       <LogOut className="h-4.5 w-4.5" />
-                      <span>Sign Out</span>
+                      <span>Logout</span>
                     </button>
-                  </>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <Link
-                      to="/login?as=customer"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white py-3 text-sm font-bold text-neutral-700 hover:bg-neutral-50 shadow-sm"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      <span>Login</span>
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 rounded-full bg-neutral-950 py-3 text-sm font-bold text-white hover:bg-neutral-900 shadow-md"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      <span>Join</span>
-                    </Link>
                   </div>
-                )}
-              </motion.div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
 

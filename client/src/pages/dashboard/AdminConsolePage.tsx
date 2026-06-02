@@ -28,7 +28,10 @@ import {
   UserCheck,
   UserMinus,
   Upload,
-  Camera
+  Camera,
+  Plus,
+  Trash2,
+  Tag
 } from "lucide-react"
 
 import {
@@ -42,6 +45,13 @@ import {
 import type { AdminUser } from "../../api/admin.api"
 import { onboardBusinessApi } from "../../api/auth.api"
 import { uploadMediaApi } from "../../api/media.api"
+import {
+  listAllPromotionsApi,
+  createPromotionApi,
+  updatePromotionApi,
+  deletePromotionApi
+} from "../../api/promotions.api"
+import type { Promotion } from "../../api/promotions.api"
 import type { Business } from "../../types"
 import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 
@@ -79,13 +89,23 @@ const editBusinessSchema = z.object({
 
 type EditBusinessForm = z.infer<typeof editBusinessSchema>
 
+// Promotion Validation Schema
+const promotionSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  redirect_slug: z.string().min(1, "Redirect slug is required"),
+  sort_order: z.number().int()
+})
+
+type PromotionForm = z.infer<typeof promotionSchema>
+
 export default function AdminConsolePage() {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<"businesses" | "users" | "onboard">("businesses")
+  const [activeTab, setActiveTab] = useState<"businesses" | "users" | "onboard" | "promotions">("businesses")
   
   // Search state
   const [businessSearch, setBusinessSearch] = useState("")
   const [userSearch, setUserSearch] = useState("")
+  const [promoSearch, setPromoSearch] = useState("")
 
   // Edit Drawer state
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
@@ -103,6 +123,19 @@ export default function AdminConsolePage() {
   // Onboard Success state
   const [onboardSuccessData, setOnboardSuccessData] = useState<any | null>(null)
   const [copiedText, setCopiedText] = useState(false)
+
+  // Promotion states
+  const [isPromoDrawerOpen, setIsPromoDrawerOpen] = useState(false)
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null)
+
+  // Promotion upload states
+  const [desktopPromoMediaId, setDesktopPromoMediaId] = useState<string | null>(null)
+  const [desktopPromoUrl, setDesktopPromoUrl] = useState<string | null>(null)
+  const [uploadingDesktopPromo, setUploadingDesktopPromo] = useState(false)
+
+  const [mobilePromoMediaId, setMobilePromoMediaId] = useState<string | null>(null)
+  const [mobilePromoUrl, setMobilePromoUrl] = useState<string | null>(null)
+  const [uploadingMobilePromo, setUploadingMobilePromo] = useState(false)
 
   // ── Queries ──────────────────────────────────────────────────
   const { data: businesses = [], isLoading: businessesLoading } = useQuery({
@@ -192,6 +225,119 @@ export default function AdminConsolePage() {
     }
   }
 
+  // ── Promotions Tab Queries & Mutations ──────────────────────
+  const { data: promotions = [], isLoading: promotionsLoading } = useQuery({
+    queryKey: ["admin", "promotions"],
+    queryFn: listAllPromotionsApi,
+    enabled: activeTab === "promotions"
+  })
+
+  const createPromotionMutation = useMutation({
+    mutationFn: createPromotionApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "promotions"] })
+      setIsPromoDrawerOpen(false)
+      resetPromoForm()
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || err.message || "Failed to create promotion banner.")
+    }
+  })
+
+  const updatePromotionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Promotion> }) => updatePromotionApi(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "promotions"] })
+      setIsPromoDrawerOpen(false)
+      resetPromoForm()
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || err.message || "Failed to update promotion banner.")
+    }
+  })
+
+  const deletePromotionMutation = useMutation({
+    mutationFn: deletePromotionApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "promotions"] })
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || err.message || "Failed to delete promotion banner.")
+    }
+  })
+
+  // ── Promotion Form Hook ──────────────────────────────────────
+  const {
+    register: registerPromo,
+    handleSubmit: handlePromoSubmit,
+    setValue: setPromoValue,
+    reset: resetPromoFormState,
+    formState: { errors: promoErrors, isSubmitting: promoSubmitting }
+  } = useForm<PromotionForm>({
+    resolver: zodResolver(promotionSchema),
+    defaultValues: {
+      title: "",
+      redirect_slug: "",
+      sort_order: 0
+    }
+  })
+
+  const resetPromoForm = () => {
+    setEditingPromotion(null)
+    resetPromoFormState({
+      title: "",
+      redirect_slug: "",
+      sort_order: 0
+    })
+    setDesktopPromoMediaId(null)
+    setDesktopPromoUrl(null)
+    setMobilePromoMediaId(null)
+    setMobilePromoUrl(null)
+  }
+
+  const openEditPromoDrawer = (promo: Promotion) => {
+    setEditingPromotion(promo)
+    setPromoValue("title", promo.title)
+    setPromoValue("redirect_slug", promo.redirect_slug)
+    setPromoValue("sort_order", promo.sort_order || 0)
+    setDesktopPromoMediaId(promo.desktop_media_id)
+    setDesktopPromoUrl(promo.desktop_url || null)
+    setMobilePromoMediaId(promo.mobile_media_id)
+    setMobilePromoUrl(promo.mobile_url || null)
+    setIsPromoDrawerOpen(true)
+  }
+
+  const onPromoSubmit = (data: PromotionForm) => {
+    if (!desktopPromoMediaId || !mobilePromoMediaId) {
+      alert("Both desktop and mobile banners are required.")
+      return
+    }
+
+    const payload = {
+      title: data.title,
+      redirect_slug: data.redirect_slug,
+      sort_order: Number(data.sort_order),
+      desktop_media_id: desktopPromoMediaId,
+      mobile_media_id: mobilePromoMediaId
+    }
+
+    if (editingPromotion) {
+      updatePromotionMutation.mutate({
+        id: editingPromotion.id,
+        data: payload
+      })
+    } else {
+      createPromotionMutation.mutate(payload)
+    }
+  }
+
+  const togglePromotionStatus = (promo: Promotion) => {
+    updatePromotionMutation.mutate({
+      id: promo.id,
+      data: { is_active: !promo.is_active }
+    })
+  }
+
   // ── Edit Form Hook ───────────────────────────────────────────
   const {
     register: registerEdit,
@@ -278,6 +424,14 @@ Admin Password: ${onboardSuccessData.plain_password}`
     )
   })
 
+  const filteredPromotions = promotions.filter((p: Promotion) => {
+    const s = promoSearch.toLowerCase()
+    return (
+      p.title.toLowerCase().includes(s) ||
+      p.redirect_slug.toLowerCase().includes(s)
+    )
+  })
+
   // Business type options for onboarding selector
   const businessTypes = [
     { id: "salon", label: "Salon", icon: Scissors, desc: "Hair & styling studios" },
@@ -335,6 +489,18 @@ Admin Password: ${onboardSuccessData.plain_password}`
             }`}
           >
             Onboard Partner
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("promotions")
+            }}
+            className={`px-4 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer select-none ${
+              activeTab === "promotions"
+                ? "bg-white text-neutral-950 shadow-vercel-sm"
+                : "text-neutral-500 hover:text-neutral-950"
+            }`}
+          >
+            Promotions
           </button>
         </div>
       </div>
@@ -953,6 +1119,176 @@ Admin Password: ${onboardSuccessData.plain_password}`
             </AnimatePresence>
           </motion.div>
         )}
+
+        {/* ── TAB 4: PROMOTIONS ── */}
+        {activeTab === "promotions" && (
+          <motion.div
+            key="promotions-tab"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
+            {/* Search/filter toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 w-full md:max-w-md bg-white border border-[#ebebeb] px-3.5 py-2.5 rounded-md shadow-vercel-sm">
+                <Search className="h-4 w-4 text-neutral-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search promotion title or slug..."
+                  value={promoSearch}
+                  onChange={(e) => setPromoSearch(e.target.value)}
+                  className="w-full text-sm outline-none text-neutral-950 placeholder-neutral-400 bg-transparent"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  resetPromoForm()
+                  setIsPromoDrawerOpen(true)
+                }}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-md bg-neutral-950 hover:bg-neutral-900 text-white text-xs font-semibold shadow-vercel-sm transition cursor-pointer select-none shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+                Add Banner
+              </button>
+            </div>
+
+            {promotionsLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <ThreeDotsLoader color="bg-neutral-900" size="w-3 h-3" className="py-2" />
+                <span className="text-sm font-medium text-neutral-500">Loading promotion banners...</span>
+              </div>
+            ) : filteredPromotions.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-lg border border-[#ebebeb] shadow-vercel-sm">
+                <Tag className="h-10 w-10 text-neutral-300 mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-neutral-800">No Banners Found</h3>
+                <p className="text-neutral-500 text-xs mt-1">Try adjusting search filters or create a new banner.</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {filteredPromotions.map((promo: Promotion) => {
+                  const isDeleting = deletePromotionMutation.isPending && deletePromotionMutation.variables === promo.id
+                  return (
+                    <div
+                      key={promo.id}
+                      className="bg-white rounded-2xl border border-[#ebebeb] hover:border-neutral-300 p-5 shadow-vercel-sm hover:shadow-vercel-md transition duration-200 flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Banner Identity Header */}
+                        <div className="flex items-center justify-between gap-4 mb-4">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-neutral-950 text-base leading-tight truncate">
+                              {promo.title}
+                            </h3>
+                            <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mt-1">
+                              <Globe className="h-3 w-3 text-neutral-400 shrink-0" />
+                              <span className="font-mono truncate">{promo.redirect_slug}</span>
+                            </div>
+                          </div>
+
+                          <button
+                            disabled={updatePromotionMutation.isPending}
+                            onClick={() => togglePromotionStatus(promo)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold select-none cursor-pointer transition active:scale-95 duration-100 shrink-0 ${
+                              promo.is_active
+                                ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                                : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600"
+                            }`}
+                          >
+                            {updatePromotionMutation.isPending && updatePromotionMutation.variables?.id === promo.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : promo.is_active ? (
+                              <CheckCircle className="h-3.5 w-3.5" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5" />
+                            )}
+                            {promo.is_active ? "Active" : "Paused"}
+                          </button>
+                        </div>
+
+                        {/* Visual Crops Panel */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
+                          <div>
+                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                              Desktop crop (3:1)
+                            </span>
+                            <div className="w-full aspect-[3/1] bg-neutral-50 rounded-lg overflow-hidden border border-neutral-200/60 relative">
+                              {promo.desktop_url ? (
+                                <img
+                                  src={promo.desktop_url}
+                                  alt="Desktop Preview"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs font-semibold bg-neutral-100/50">
+                                  Missing Asset
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                              Mobile crop (4:3)
+                            </span>
+                            <div className="w-28 aspect-[4/3] bg-neutral-50 rounded-lg overflow-hidden border border-neutral-200/60 relative">
+                              {promo.mobile_url ? (
+                                <img
+                                  src={promo.mobile_url}
+                                  alt="Mobile Preview"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-neutral-400 text-xs font-semibold bg-neutral-100/50">
+                                  Missing Asset
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info & Footer Operations */}
+                      <div className="border-t border-[#ebebeb] pt-4 mt-2 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-neutral-400">Sort Priority:</span>
+                          <span className="font-semibold text-neutral-800 bg-neutral-50 px-2 py-0.5 rounded border border-[#ebebeb]">
+                            {promo.sort_order ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEditPromoDrawer(promo)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-[#ebebeb] bg-white text-neutral-700 hover:text-neutral-950 hover:bg-neutral-50 font-semibold transition cursor-pointer"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                            Edit
+                          </button>
+                          <button
+                            disabled={isDeleting}
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this promotion banner?")) {
+                                deletePromotionMutation.mutate(promo.id)
+                              }
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-600 font-semibold transition cursor-pointer"
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* ── EDIT PARTNER BUSINESS SLIDE DRAWER ── */}
@@ -1253,6 +1589,231 @@ Admin Password: ${onboardSuccessData.plain_password}`
                         </>
                       ) : (
                         "Save Configurations"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── CREATE / EDIT PROMOTION SLIDE DRAWER ── */}
+      <AnimatePresence>
+        {isPromoDrawerOpen && (
+          <>
+            {/* Backdrop click-away */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              onClick={resetPromoForm}
+              className="fixed inset-0 bg-neutral-950 z-40"
+            />
+
+            {/* Slide drawer container */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="fixed inset-y-0 right-0 w-full max-w-lg bg-white border-l border-[#ebebeb] z-50 shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto"
+            >
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between pb-6 border-b border-[#ebebeb] mb-6">
+                  <div>
+                    <h2 className="text-base font-bold tracking-[-0.3px] text-neutral-950">
+                      {editingPromotion ? "Edit Promotion Banner" : "Create Promotion Banner"}
+                    </h2>
+                    <p className="text-neutral-500 text-xs mt-1">
+                      {editingPromotion ? `Updating Promotion ID: ${editingPromotion.id}` : "Configure a new landing promotional banner"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={resetPromoForm}
+                    className="p-1 rounded-md text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Form fields */}
+                <form onSubmit={handlePromoSubmit(onPromoSubmit)} className="space-y-5 text-xs">
+                  
+                  {/* Banner Title / ALT Text */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-neutral-700 mb-1.5 uppercase">
+                      Banner Name / Marketing Title *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Summer Blowout Sale up to 50% off"
+                      className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent"
+                      {...registerPromo("title")}
+                    />
+                    {promoErrors.title && (
+                      <p className="text-[10px] text-red-500 mt-1">{promoErrors.title.message}</p>
+                    )}
+                  </div>
+
+                  {/* Redirect Slug */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-neutral-700 mb-1.5 uppercase">
+                      Redirection Destination Slug or URL *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. blush-styling-bar"
+                      className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent"
+                      {...registerPromo("redirect_slug")}
+                    />
+                    <span className="block text-[10px] text-neutral-400 mt-1 leading-normal">
+                      Input the slug of the business page (e.g. `blush-styling-bar`), an internal path (e.g. `/customer/explore`), or a complete external URL.
+                    </span>
+                    {promoErrors.redirect_slug && (
+                      <p className="text-[10px] text-red-500 mt-1">{promoErrors.redirect_slug.message}</p>
+                    )}
+                  </div>
+
+                  {/* Sort Order */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-neutral-700 mb-1.5 uppercase">
+                      Sort Order / Priority Priority (ascending)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm outline-none transition focus:ring-2 focus:ring-neutral-950 focus:border-transparent"
+                      {...registerPromo("sort_order", { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  {/* Banner Image Dual-Upload Panel */}
+                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-lg border border-gray-100 mb-4">
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                      Dual-Format Responsive Graphics Upload
+                    </span>
+
+                    <div className="space-y-4">
+                      {/* Desktop Banner (3:1) */}
+                      <div>
+                        <span className="block text-[9px] font-semibold text-neutral-500 mb-1.5 uppercase">
+                          Desktop Graphic Asset (3:1 Ratio) *
+                        </span>
+                        <div className="relative group w-full aspect-[3/1] border border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white hover:bg-gray-50/50 transition">
+                          {desktopPromoUrl ? (
+                            <>
+                              <img src={desktopPromoUrl} alt="Desktop Promo" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                                <label htmlFor="desktop-promo-input" className="cursor-pointer text-white text-[9px] font-semibold flex flex-col items-center gap-0.5">
+                                  <Upload className="h-4 w-4" />
+                                  <span>Swap Asset</span>
+                                </label>
+                              </div>
+                            </>
+                          ) : (
+                            <label htmlFor="desktop-promo-input" className="cursor-pointer text-neutral-500 hover:text-neutral-700 flex flex-col items-center gap-1 py-4 w-full h-full justify-center">
+                              <Upload className="h-4 w-4 text-neutral-400" />
+                              <span className="text-[10px] font-medium">Click to upload 3:1 aspect ratio graphic</span>
+                            </label>
+                          )}
+                          <input
+                            id="desktop-promo-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              try {
+                                setUploadingDesktopPromo(true)
+                                const media = await uploadMediaApi(file, "promotion_banners")
+                                setDesktopPromoMediaId(media.id)
+                                setDesktopPromoUrl(media.url)
+                              } catch (err: any) {
+                                console.error(err)
+                                alert("Desktop banner upload failed.")
+                              } finally {
+                                setUploadingDesktopPromo(false)
+                              }
+                            }}
+                          />
+                        </div>
+                        {uploadingDesktopPromo && <span className="text-[9px] text-neutral-400 mt-1 block animate-pulse">Uploading Desktop Asset...</span>}
+                      </div>
+
+                      {/* Mobile Banner (4:3) */}
+                      <div>
+                        <span className="block text-[9px] font-semibold text-neutral-500 mb-1.5 uppercase">
+                          Mobile Graphic Asset (4:3 Ratio) *
+                        </span>
+                        <div className="relative group w-40 aspect-[4/3] border border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white hover:bg-gray-50/50 transition">
+                          {mobilePromoUrl ? (
+                            <>
+                              <img src={mobilePromoUrl} alt="Mobile Promo" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                                <label htmlFor="mobile-promo-input" className="cursor-pointer text-white text-[9px] font-semibold flex flex-col items-center gap-0.5">
+                                  <Upload className="h-4 w-4" />
+                                  <span>Swap Asset</span>
+                                </label>
+                              </div>
+                            </>
+                          ) : (
+                            <label htmlFor="mobile-promo-input" className="cursor-pointer text-neutral-500 hover:text-neutral-700 flex flex-col items-center gap-1 py-4 w-full h-full justify-center">
+                              <Upload className="h-4 w-4 text-neutral-400" />
+                              <span className="text-[10px] font-medium">Click to upload 4:3 graphic</span>
+                            </label>
+                          )}
+                          <input
+                            id="mobile-promo-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              try {
+                                setUploadingMobilePromo(true)
+                                const media = await uploadMediaApi(file, "promotion_banners")
+                                setMobilePromoMediaId(media.id)
+                                setMobilePromoUrl(media.url)
+                              } catch (err: any) {
+                                console.error(err)
+                                alert("Mobile banner upload failed.")
+                              } finally {
+                                setUploadingMobilePromo(false)
+                              }
+                            }}
+                          />
+                        </div>
+                        {uploadingMobilePromo && <span className="text-[9px] text-neutral-400 mt-1 block animate-pulse">Uploading Mobile Asset...</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions buttons footer */}
+                  <div className="flex gap-3 pt-6 border-t border-[#ebebeb] mt-8">
+                    <button
+                      type="button"
+                      onClick={resetPromoForm}
+                      className="flex-1 bg-white hover:bg-neutral-50 text-neutral-700 border border-gray-200 font-semibold py-2.5 rounded-md text-xs transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={promoSubmitting || createPromotionMutation.isPending || updatePromotionMutation.isPending || uploadingDesktopPromo || uploadingMobilePromo}
+                      className="flex-1 bg-neutral-950 hover:bg-neutral-900 text-white font-semibold py-2.5 rounded-md text-xs transition shadow-vercel-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {(promoSubmitting || createPromotionMutation.isPending || updatePromotionMutation.isPending) ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving banner...
+                        </>
+                      ) : (
+                        "Save Promotion"
                       )}
                     </button>
                   </div>
