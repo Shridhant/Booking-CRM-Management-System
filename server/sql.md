@@ -697,3 +697,24 @@ ALTER TABLE public.waitlist ADD CONSTRAINT waitlist_business_id_fkey FOREIGN KEY
 ALTER TABLE public.waitlist ADD CONSTRAINT waitlist_customer_user_id_fkey FOREIGN KEY (customer_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE public.waitlist ADD CONSTRAINT waitlist_employee_id_fkey FOREIGN KEY (employee_id) REFERENCES public.employees(id) ON DELETE SET NULL;
 ALTER TABLE public.waitlist ADD CONSTRAINT waitlist_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id) ON DELETE SET NULL;
+
+
+-- public.promotions definition
+
+CREATE TABLE public.promotions (
+	id uuid DEFAULT gen_random_uuid() NOT NULL,
+	title varchar(255) NOT NULL,
+	desktop_media_id uuid NOT NULL,
+	mobile_media_id uuid NOT NULL,
+	redirect_slug varchar(255) NOT NULL,
+	is_active bool DEFAULT true NULL,
+	sort_order int4 DEFAULT 0 NULL,
+	created_at timestamp DEFAULT now() NULL,
+	updated_at timestamp DEFAULT now() NULL,
+	CONSTRAINT promotions_pkey PRIMARY KEY (id)
+);
+
+-- public.promotions foreign keys
+
+ALTER TABLE public.promotions ADD CONSTRAINT promotions_desktop_media_id_fkey FOREIGN KEY (desktop_media_id) REFERENCES public.media(id) ON DELETE RESTRICT;
+ALTER TABLE public.promotions ADD CONSTRAINT promotions_mobile_media_id_fkey FOREIGN KEY (mobile_media_id) REFERENCES public.media(id) ON DELETE RESTRICT;

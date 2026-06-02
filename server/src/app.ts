@@ -27,6 +27,7 @@ import bookingRoutes from './modules/bookings/bookings.routes'
 
 import availabilityRoutes from './modules/availability/availability.routes'
 import mediaRoutes from './modules/media/media.routes'
+import promotionsRoutes from './modules/promotions/promotions.routes'
 
 const app = express()
 
@@ -47,6 +48,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes)
 
 app.use("/api/public", publicRoutes)
+
+app.use("/api/promotions", promotionsRoutes)
 
 // Media upload routes
 app.use("/api/media", mediaRoutes)
