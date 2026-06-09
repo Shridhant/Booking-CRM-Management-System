@@ -58,15 +58,15 @@ export default function CustomerBookingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="mono-label mb-2">my appointments</p>
-          <h1 className="text-3xl font-semibold text-neutral-950">Bookings</h1>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="uppercase-label-11 mb-2 text-olive-stone">my appointments</p>
+          <h1 className="page-heading text-midnight-ink">Bookings</h1>
+          <p className="mt-2 text-sm text-olive-stone leading-relaxed">
             View your booking history, cancel eligible appointments, and review completed visits.
           </p>
         </div>
         <Link
           to="/customer"
-          className="inline-flex items-center justify-center rounded-full bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white shadow-vercel-sm hover:bg-neutral-900"
+          className="btn-filled text-xs px-4 py-2.5"
         >
           Book another service
         </Link>
@@ -77,10 +77,10 @@ export default function CustomerBookingsPage() {
           <button
             key={item.value}
             onClick={() => setScope(item.value)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+            className={`rounded-[8px] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.045em] border transition cursor-pointer ${
               scope === item.value
-                ? "border-neutral-950 bg-neutral-950 text-white"
-                : "border-[#ebebeb] bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
+                ? "border-midnight-ink bg-midnight-ink text-white"
+                : "border-soft-mist bg-white text-olive-stone hover:bg-soft-mist/35 hover:text-midnight-ink"
             }`}
           >
             {item.label}
@@ -90,15 +90,15 @@ export default function CustomerBookingsPage() {
 
       {isLoading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
-          <ThreeDotsLoader color="bg-[#e8b9c5]" size="w-3 h-3" />
+          <ThreeDotsLoader color="bg-midnight-ink" size="w-3 h-3" />
         </div>
       ) : error ? (
-        <div className="app-card p-6 text-sm text-red-600">Could not load your bookings.</div>
+        <div className="artboard-card p-6 text-sm text-red-600">Could not load your bookings.</div>
       ) : bookings.length === 0 ? (
-        <div className="app-card p-8 text-center">
-          <CalendarClock className="mx-auto h-8 w-8 text-neutral-400" />
-          <p className="mt-3 text-base font-semibold text-neutral-950">No bookings here yet.</p>
-          <p className="mt-1 text-sm text-neutral-500">Explore businesses and book a slot when you are ready.</p>
+        <div className="artboard-card p-8 text-center">
+          <CalendarClock className="mx-auto h-8 w-8 text-olive-stone" />
+          <p className="mt-3 text-base font-semibold text-midnight-ink">No bookings here yet.</p>
+          <p className="mt-1 text-xs text-olive-stone">Explore businesses and book a slot when you are ready.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -123,7 +123,7 @@ export default function CustomerBookingsPage() {
       )}
 
       {(cancelMutation.error || reviewMutation.error) && (
-        <div className="app-card border-red-200 bg-red-50 p-4 text-sm text-red-600">
+        <div className="artboard-card border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {String(cancelMutation.error || reviewMutation.error)}
         </div>
       )}
@@ -163,14 +163,14 @@ function BookingRow({
   const reviewOpen = reviewBookingId === booking.id
 
   return (
-    <article className="app-card p-4 sm:p-5">
+    <article className="artboard-card p-4 sm:p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold text-neutral-950">{booking.business_name}</h2>
+            <h2 className="text-[19px] font-semibold tracking-[-0.44px] text-midnight-ink">{booking.business_name}</h2>
             <StatusBadge status={booking.booking_status} />
           </div>
-          <div className="mt-2 flex flex-wrap gap-3 text-sm text-neutral-600">
+          <div className="mt-2 flex flex-wrap gap-3 text-sm text-olive-stone">
             <span className="inline-flex items-center gap-1.5">
               <CalendarClock className="h-4 w-4" />
               {formatDate(booking.booking_date)} at {formatTime(booking.start_time)}
@@ -184,12 +184,12 @@ function BookingRow({
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {booking.services.map((service) => (
-              <span key={service.service_id} className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-700">
+              <span key={service.service_id} className="rounded-[8px] border border-soft-mist bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.045em] text-olive-stone">
                 {service.service_name}
               </span>
             ))}
           </div>
-          <p className="mt-3 text-sm font-semibold text-neutral-950">Rs {Number(booking.total_amount || 0).toFixed(0)}</p>
+          <p className="mt-3 text-sm font-semibold text-midnight-ink">Rs {Number(booking.total_amount || 0).toFixed(0)}</p>
         </div>
 
         <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -197,7 +197,7 @@ function BookingRow({
             <button
               onClick={onCancel}
               disabled={isCancelling}
-              className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.045em] text-red-600 hover:bg-red-100 disabled:opacity-60 cursor-pointer"
             >
               {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
               Cancel
@@ -206,14 +206,14 @@ function BookingRow({
           {canReview && (
             <button
               onClick={onStartReview}
-              className="inline-flex items-center gap-2 rounded-md border border-[#ebebeb] bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
+              className="btn-outline text-[11px] py-2 px-3"
             >
               <MessageSquare className="h-4 w-4" />
               Review
             </button>
           )}
           {booking.review_rating && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+            <span className="inline-flex items-center gap-1 rounded-[8px] border border-soft-mist bg-amber-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.045em] text-amber-700">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
               {booking.review_rating}
             </span>
@@ -222,13 +222,13 @@ function BookingRow({
       </div>
 
       {reviewOpen && (
-        <div className="mt-4 rounded-md border border-[#ebebeb] bg-neutral-50 p-4">
+        <div className="mt-4 rounded-[12px] border border-soft-mist bg-white p-4">
           <div className="flex flex-wrap items-center gap-2">
             {[1, 2, 3, 4, 5].map((value) => (
               <button
                 key={value}
                 onClick={() => onRatingChange(value)}
-                className="rounded-md p-1 text-amber-400 hover:bg-white"
+                className="rounded-[8px] p-1 text-amber-400 hover:bg-soft-mist/30 transition"
                 aria-label={`Rate ${value}`}
               >
                 <Star className={`h-6 w-6 ${value <= rating ? "fill-amber-400" : "fill-transparent"}`} />
@@ -240,16 +240,16 @@ function BookingRow({
             onChange={(event) => onCommentChange(event.target.value)}
             rows={3}
             placeholder="Share how the service went"
-            className="mt-3 w-full resize-none rounded-md border border-[#d4d4d4] bg-white px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-neutral-950"
+            className="mt-3 w-full resize-none rounded-[8px] border border-soft-mist bg-white px-3 py-2.5 text-sm text-midnight-ink outline-none focus:border-midnight-ink"
           />
           <div className="mt-3 flex flex-wrap justify-end gap-2">
-            <button onClick={onCloseReview} className="rounded-md px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-white">
+            <button onClick={onCloseReview} className="rounded-[8px] border border-soft-mist px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.045em] text-olive-stone hover:bg-soft-mist/30 transition">
               Close
             </button>
             <button
               onClick={onSubmitReview}
               disabled={isReviewing}
-              className="inline-flex items-center gap-2 rounded-full bg-neutral-950 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-60"
+              className="btn-filled text-[11px] py-2 px-4"
             >
               {isReviewing && <Loader2 className="h-4 w-4 animate-spin" />}
               Submit review
@@ -264,15 +264,15 @@ function BookingRow({
 function StatusBadge({ status }: { status: string }) {
   const classes =
     status === "cancelled"
-      ? "bg-red-50 text-red-700"
+      ? "border-red-200 bg-red-50 text-red-700"
       : status === "completed"
-        ? "bg-emerald-50 text-emerald-700"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
         : status === "pending"
-          ? "bg-amber-50 text-amber-700 border border-amber-200"
-          : "bg-sky-50 text-sky-700 border border-sky-200"
+          ? "border-amber-200 bg-amber-50 text-amber-700"
+          : "border-sky-200 bg-sky-50 text-sky-700"
 
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${classes}`}>
+    <span className={`rounded-[8px] border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.045em] capitalize ${classes}`}>
       {status.replace("_", " ")}
     </span>
   )

@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { BadgeCheck, MapPin, Search, Star, Heart, Sparkles } from "lucide-react"
+import { BadgeCheck, MapPin, Search, Star, Heart } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { searchPublicBusinessesApi } from "../../api/public.api"
 import { listActivePromotionsApi } from "../../api/promotions.api"
@@ -9,11 +9,11 @@ import ThreeDotsLoader from "../../components/common/ThreeDotsLoader"
 
 // Premium category structure matching the mockup icons
 const categoryItems = [
-  { label: "Salon ", value: "salon", color: "bg-[#fff6e6] text-[#ff9900] border-[#ffe6b3]", icon: "✨" },
-  { label: "Spa", value: "spa", color: "bg-[#e6f9f3] text-[#00b386] border-[#b3f0db]", icon: "🧼" },
-  { label: "Professional", value: "professional", color: "bg-[#fffdeb] text-[#e6b800] border-[#fff799]", icon: "🛠️" },
-  { label: "Nails", value: "nail_studio", color: "bg-[#ebf8ff] text-[#007acc] border-[#99d6ff]", icon: "💅" },
-  { label: "Barber", value: "barber", color: "bg-[#f9ebff] text-[#ac33db] border-[#e6b3ff]", icon: "💈" }
+  { label: "Salon", value: "salon", color: "bg-peach-wash text-midnight-ink border-soft-mist", icon: "✨" },
+  { label: "Spa", value: "spa", color: "bg-sky-wash text-midnight-ink border-soft-mist", icon: "🧼" },
+  { label: "Professional", value: "professional", color: "bg-mint-wash text-midnight-ink border-soft-mist", icon: "🛠️" },
+  { label: "Nails", value: "nail_studio", color: "bg-peach-wash text-midnight-ink border-soft-mist", icon: "💅" },
+  { label: "Barber", value: "barber", color: "bg-sky-wash text-midnight-ink border-soft-mist", icon: "💈" }
 ]
 
 export default function CustomerExplorePage() {
@@ -69,33 +69,33 @@ export default function CustomerExplorePage() {
       {/* ── 2. Interactive Search & Filters ── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_380px] items-start">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-olive-stone" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for salon, cleaning, massage, handyman..."
-            className="w-full rounded-full border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 outline-none shadow-sm focus:ring-2 focus:ring-[#db2777]/20 focus:border-[#db2777] transition-all"
+            className="w-full rounded-[8px] border border-soft-mist bg-white py-3.5 pl-12 pr-4 text-sm text-midnight-ink outline-none focus:border-midnight-ink transition-all"
           />
         </div>
 
         <div className="relative">
-          <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+          <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-olive-stone" />
           <input
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Search by city (e.g. Delhi, Hawaii)"
-            className="w-full rounded-full border border-neutral-200 bg-white py-3.5 pl-12 pr-4 text-sm text-neutral-900 outline-none shadow-sm focus:ring-2 focus:ring-[#db2777]/20 focus:border-[#db2777] transition-all"
+            className="w-full rounded-[8px] border border-soft-mist bg-white py-3.5 pl-12 pr-4 text-sm text-midnight-ink outline-none focus:border-midnight-ink transition-all"
           />
         </div>
       </div>
 
       {/* ── 3. Dynamic Banners Carousel or Static Fallback ── */}
       {promotionsLoading ? (
-        <div className="w-full h-44 sm:h-56 bg-neutral-50 rounded-3xl flex items-center justify-center border border-neutral-100 shadow-inner">
-          <ThreeDotsLoader color="bg-[#db2777]" size="w-2.5 h-2.5" />
+        <div className="w-full h-44 sm:h-56 bg-white rounded-[12px] flex items-center justify-center border border-soft-mist">
+          <ThreeDotsLoader color="bg-midnight-ink" size="w-2.5 h-2.5" />
         </div>
       ) : promotions.length > 0 ? (
-        <div className="relative w-full overflow-hidden rounded-[24px] shadow-vercel-md bg-neutral-50 border border-neutral-100 flex items-center justify-center">
+        <div className="relative w-full overflow-hidden rounded-[12px] bg-white border border-soft-mist flex items-center justify-center animate-fade-in-down">
           {/* Main responsive sliding container */}
           <div className="relative w-full aspect-[3/1] sm:max-h-[300px] md:max-h-[350px] overflow-hidden">
             <AnimatePresence mode="wait">
@@ -142,7 +142,7 @@ export default function CustomerExplorePage() {
                     key={idx}
                     type="button"
                     onClick={() => setCurrentSlide(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-5 bg-white shadow-md" : "w-2 bg-white/60 hover:bg-white"
+                    className={`h-2 rounded-[8px] transition-all duration-300 cursor-pointer ${idx === currentSlide ? "w-5 bg-midnight-ink" : "w-2 bg-midnight-ink/40 hover:bg-midnight-ink"
                       }`}
                   />
                 ))}
@@ -155,52 +155,47 @@ export default function CustomerExplorePage() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00bfff] via-[#33ccff] to-[#80e5ff] p-6 text-white shadow-xl flex items-center justify-between"
+          className="relative overflow-hidden rounded-[12px] bg-sky-wash p-6 text-midnight-ink border border-soft-mist flex items-center justify-between"
         >
-          {/* Animated Abstract Glass Bubbles */}
-          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-xl -translate-y-12 translate-x-12 pointer-events-none" />
-          <div className="absolute left-1/3 bottom-0 h-28 w-28 rounded-full bg-cyan-300/30 blur-lg pointer-events-none" />
-
           <div className="relative z-10 max-w-lg space-y-2">
-            <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+            <span className="bg-white/40 border border-soft-mist px-3 py-1 rounded-[8px] text-[11px] font-semibold tracking-[0.045em] uppercase">
               Special Promo
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.99px] text-midnight-ink">
               Up to 50% Off!
             </h2>
-            <p className="text-xs text-white/95 max-w-sm">
+            <p className="text-sm text-midnight-ink/80 max-w-sm">
               Book home cleaning, premium salon styling, or wellness sessions now to avail the offer.
             </p>
-            <button className="mt-3 bg-[#ffcc00] hover:bg-[#e6b800] text-neutral-900 px-4 py-2 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition duration-200 active:scale-95">
+            <button className="mt-3 btn-filled text-xs">
               Grab the Offer Now
             </button>
           </div>
 
           {/* Right side floating graphics (Mock Illustration Container) */}
           <div className="relative hidden md:flex items-center justify-center w-40 h-32 pr-4 z-10">
-            <div className="absolute text-5xl animate-bounce duration-1000">🧼🧴✨</div>
+            <div className="absolute text-5xl">🧼🧴✨</div>
           </div>
         </motion.div>
       )}
 
-      {/* ── 4. Circular Category Selectors Bar ── */}
+      {/* ── 4. Category Selectors Bar ── */}
       <div className="space-y-3">
-        <h3 className="text-base font-bold text-neutral-800 flex items-center gap-1.5">
-          <Sparkles className="h-4.5 w-4.5 text-[#db2777]" />
+        <h3 className="text-[13px] font-semibold uppercase tracking-[0.045em] text-midnight-ink">
           Category
         </h3>
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
           <button
             onClick={() => setType("")}
-            className={`flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none`}
+            className="flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none"
           >
-            <div className={`h-16 w-16  min-w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${type === ""
-              ? "bg-neutral-900 text-white border-neutral-950"
-              : "bg-white text-neutral-600 border-neutral-100 hover:border-neutral-200"
+            <div className={`h-16 w-16 min-w-16 rounded-[12px] flex items-center justify-center text-2xl border transition duration-200 ${type === ""
+              ? "bg-midnight-ink text-white border-midnight-ink"
+              : "bg-white text-midnight-ink border-soft-mist hover:border-midnight-ink"
               }`}>
               🌍
             </div>
-            <span className="text-xs font-semibold text-neutral-700">All</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.045em] text-olive-stone">All</span>
           </button>
 
           {categoryItems.map((cat) => {
@@ -211,13 +206,13 @@ export default function CustomerExplorePage() {
                 onClick={() => setType(cat.value)}
                 className="flex flex-col items-center gap-2 shrink-0 snap-start transition cursor-pointer select-none"
               >
-                <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl shadow-md border transition duration-200 ${isSelected
-                  ? "bg-neutral-900 text-white border-neutral-950 scale-105"
+                <div className={`h-16 w-16 rounded-[12px] flex items-center justify-center text-2xl border transition duration-200 ${isSelected
+                  ? "bg-midnight-ink text-white border-midnight-ink scale-105"
                   : `${cat.color} hover:brightness-95`
                   }`}>
                   {cat.icon}
                 </div>
-                <span className="text-xs font-semibold text-neutral-700">{cat.label}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.045em] text-olive-stone">{cat.label}</span>
               </button>
             )
           })}
@@ -227,22 +222,22 @@ export default function CustomerExplorePage() {
       {/* ── 5. Popular Service Cards ── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-neutral-800">Popular Services</h3>
-          <span className="text-xs font-semibold text-[#db2777] cursor-pointer hover:underline">See all</span>
+          <h3 className="text-[19px] font-semibold tracking-[-0.44px] text-midnight-ink">Popular Services</h3>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.045em] text-midnight-ink cursor-pointer hover:underline">See all</span>
         </div>
 
         {error ? (
-          <div className="rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+          <div className="rounded-[8px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
             Could not load popular services.
           </div>
         ) : isLoading ? (
           <div className="flex min-h-[220px] items-center justify-center">
-            <ThreeDotsLoader color="bg-[#db2777]" size="w-3 h-3" />
+            <ThreeDotsLoader color="bg-midnight-ink" size="w-3 h-3" />
           </div>
         ) : businesses.length === 0 ? (
-          <div className="rounded-[20px] border border-neutral-200 bg-white p-8 text-center">
-            <p className="text-sm font-semibold text-neutral-900">No popular services found in this category.</p>
-            <p className="mt-1 text-xs text-neutral-500">Try modifying filters or switching search query.</p>
+          <div className="rounded-[12px] border border-soft-mist bg-white p-8 text-center">
+            <p className="text-sm font-semibold text-midnight-ink">No popular services found in this category.</p>
+            <p className="mt-1 text-xs text-olive-stone">Try modifying filters or switching search query.</p>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -257,10 +252,10 @@ export default function CustomerExplorePage() {
                 >
                   <Link
                     to={`/customer/businesses/${business.slug || business.id}`}
-                    className="group block overflow-hidden rounded-3xl border border-neutral-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-md transition duration-300"
+                    className="group block overflow-hidden rounded-[12px] border border-soft-mist bg-white transition duration-300"
                   >
                     {/* Header Image with Heart and Rating Overlay */}
-                    <div className="relative aspect-[16/10] bg-neutral-100 overflow-hidden">
+                    <div className="relative aspect-[16/10] bg-white overflow-hidden">
                       {business.cover_url || business.logo_url ? (
                         <img
                           src={business.cover_url || business.logo_url || ""}
@@ -268,20 +263,20 @@ export default function CustomerExplorePage() {
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#db2777]/20 via-pink-100 to-cyan-100" />
+                        <div className="flex h-full items-center justify-center bg-sky-wash" />
                       )}
 
                       {/* Favorite Heart Button */}
                       <button
                         onClick={(e) => toggleFavorite(e, business.id)}
-                        className="absolute right-3.5 top-3.5 z-10 h-8 w-8 rounded-full bg-white/90 backdrop-blur-md border border-neutral-100 flex items-center justify-center shadow-md active:scale-90 transition cursor-pointer"
+                        className="absolute right-3.5 top-3.5 z-10 h-8 w-8 rounded-[8px] bg-white border border-soft-mist flex items-center justify-center active:scale-90 transition cursor-pointer"
                       >
-                        <Heart className={`h-4 w-4 transition duration-200 ${isFav ? "fill-red-500 text-red-500" : "text-neutral-500 hover:text-red-500"}`} />
+                        <Heart className={`h-4 w-4 transition duration-200 ${isFav ? "fill-red-500 text-red-500" : "text-olive-stone hover:text-red-500"}`} />
                       </button>
 
                       {/* Floating Star Rating Badge */}
-                      <div className="absolute left-3.5 top-3.5 z-10 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-md px-2 py-1 text-[10px] font-bold text-neutral-800 shadow-md border border-neutral-100">
-                        <Star className="h-3 w-3 fill-[#ffcc00] text-[#ffcc00]" />
+                      <div className="absolute left-3.5 top-3.5 z-10 flex items-center gap-1 rounded-[8px] bg-white/95 px-2 py-1 text-[11px] font-semibold tracking-[0.045em] text-midnight-ink border border-soft-mist">
+                        <Star className="h-3 w-3 fill-midnight-ink text-midnight-ink" />
                         <span>{Number(business.average_rating || 0).toFixed(1)}</span>
                       </div>
                     </div>
@@ -289,24 +284,23 @@ export default function CustomerExplorePage() {
                     {/* Detailed Card Info */}
                     <div className="p-5 space-y-2">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="truncate text-base font-bold text-neutral-800 leading-tight">
+                        <h4 className="truncate text-base font-semibold text-midnight-ink leading-tight">
                           {business.name}
                         </h4>
-                        {business.is_verified && <BadgeCheck className="h-4.5 w-4.5 text-emerald-500 shrink-0" />}
+                        {business.is_verified && <BadgeCheck className="h-4.5 w-4.5 text-emerald-600 shrink-0" />}
                       </div>
 
-                      <p className="text-xs text-neutral-400 capitalize font-medium">
+                      <p className="text-[11px] uppercase tracking-[0.045em] text-olive-stone font-semibold">
                         {business.business_type.replace("_", " ")} &bull; {business.city || "Hawaii"}
                       </p>
 
-                      <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-olive-stone line-clamp-2 leading-relaxed">
                         {business.description || "Browse and book local experts in premium quality clean beauty and home care services."}
                       </p>
 
                       {/* Pricing Row & Action Button */}
-                      <div className="pt-3 border-t border-neutral-50 flex items-center justify-between">
-
-                        <span className="bg-[#00bfff] hover:bg-[#0099cc] text-white px-4.5 py-2 rounded-full text-xs font-bold shadow-md transition duration-200">
+                      <div className="pt-3 border-t border-soft-mist flex items-center justify-end">
+                        <span className="btn-outline text-[11px] py-1.5 px-3.5 group-hover:bg-midnight-ink group-hover:text-white transition">
                           Book
                         </span>
                       </div>

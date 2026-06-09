@@ -14,6 +14,38 @@
   --shadow-vercel-sm: 0px 1px 1px #00000005, 0px 2px 2px #0000000a, inset 0 0 0 1px #0000000a;
   --shadow-vercel-md: 0px 2px 2px #0000000a, 0px 8px 8px -8px #0000000a, inset 0 0 0 1px #00000012;
   --shadow-vercel-lg: 0px 2px 2px #0000000a, 0px 8px 16px -4px #0000000a, inset 0 0 0 1px #00000012;
+
+  --color-midnight-ink: #0d1400;
+  --color-lime-voltage: #aaff00;
+  --color-paper-white: #ffffff;
+  --color-olive-stone: #838976;
+  --color-soft-mist: #e6e7e4;
+  --color-peach-wash: #ffe4c3;
+  --color-sky-wash: #cbedff;
+  --color-mint-wash: #caf3aa;
+
+  --animate-slide-in: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in-down: fade-in-down 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes slide-in {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fade-in-down {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 @layer base {
@@ -108,5 +140,122 @@
     font-size: 0.75rem;
     line-height: 1rem;
     color: #888888;
+  }
+
+  /* Artboard Design System components */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #0d1400;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #0d1400;
+    font-family: "Inter", var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    padding: 8px 19px;
+    transition: all 0.15s ease-out;
+    cursor: pointer;
+  }
+  .btn-outline:hover {
+    background-color: #0d1400;
+    color: #ffffff;
+  }
+  .btn-filled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #0d1400;
+    border-radius: 8px;
+    background-color: #0d1400;
+    color: #ffffff;
+    font-family: "Inter", var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    padding: 8px 19px;
+    transition: all 0.15s ease-out;
+    cursor: pointer;
+  }
+  .btn-filled:hover {
+    background-color: #ffffff;
+    color: #0d1400;
+  }
+
+  .artboard-card {
+    background-color: #ffffff;
+    border: 1px solid #e6e7e4;
+    border-radius: 12px;
+  }
+  
+  .artboard-card-peach {
+    background-color: #ffe4c3;
+    border: 1px solid #e6e7e4;
+    border-radius: 12px;
+  }
+  
+  .artboard-card-sky {
+    background-color: #cbedff;
+    border: 1px solid #e6e7e4;
+    border-radius: 12px;
+  }
+  
+  .artboard-card-mint {
+    background-color: #caf3aa;
+    border: 1px solid #e6e7e4;
+    border-radius: 12px;
+  }
+
+  .display-headline {
+    font-family: "Inter", var(--font-sans);
+    font-size: 61px;
+    line-height: 1.2;
+    letter-spacing: -2.01px;
+    font-weight: 600;
+  }
+  
+  .page-heading {
+    font-family: "Inter", var(--font-sans);
+    font-size: 43px;
+    line-height: 1.2;
+    letter-spacing: -0.99px;
+    font-weight: 600;
+  }
+  
+  .section-subheading {
+    font-family: "Inter", var(--font-sans);
+    font-size: 19px;
+    line-height: 1.5;
+    letter-spacing: -0.44px;
+    font-weight: 400;
+  }
+  
+  .uppercase-label-13 {
+    font-family: "Inter", var(--font-sans);
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: 0.045em;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .uppercase-label-11 {
+    font-family: "Inter", var(--font-sans);
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.045em;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .body-text {
+    font-family: system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: 0.031em;
   }
 }

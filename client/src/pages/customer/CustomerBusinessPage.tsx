@@ -265,7 +265,7 @@ export default function CustomerBusinessPage() {
         action: () => {
           document.getElementById("services")?.scrollIntoView({ behavior: "smooth", block: "center" })
         },
-        className: "bg-neutral-900 text-white hover:bg-neutral-800"
+        className: "border-midnight-ink bg-white text-midnight-ink hover:bg-midnight-ink hover:text-white"
       }
     }
     if (!selectedSlot) {
@@ -274,13 +274,13 @@ export default function CustomerBusinessPage() {
         action: () => {
           document.getElementById("available-times")?.scrollIntoView({ behavior: "smooth", block: "center" })
         },
-        className: "bg-[#00bfff] text-white hover:bg-[#0099cc]"
+        className: "border-midnight-ink bg-white text-midnight-ink hover:bg-midnight-ink hover:text-white"
       }
     }
     return {
       text: isAuthenticated ? "Confirm Booking" : "Login to Book",
       action: handleBook,
-      className: "bg-[#ffcc00] text-neutral-900 hover:bg-[#e6b800]"
+      className: "bg-midnight-ink border-midnight-ink text-white hover:bg-white hover:text-midnight-ink"
     }
   }
 
@@ -289,16 +289,16 @@ export default function CustomerBusinessPage() {
   if (businessLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <ThreeDotsLoader color="bg-[#db2777]" size="w-3 h-3" />
+        <ThreeDotsLoader color="bg-midnight-ink" size="w-3 h-3" />
       </div>
     )
   }
 
   if (!business) {
     return (
-      <div className="rounded-[22px] border border-white/70 bg-white/80 p-8 text-center">
-        <p className="text-base font-semibold text-neutral-900">Business not found.</p>
-        <Link to="/customer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-neutral-900 hover:underline">
+      <div className="rounded-[12px] border border-soft-mist bg-white p-8 text-center animate-fade-in-down">
+        <p className="text-base font-semibold text-midnight-ink">Business not found.</p>
+        <Link to="/customer" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.045em] text-midnight-ink hover:underline">
           <ArrowLeft className="h-4 w-4" />
           Back to explore
         </Link>
@@ -316,12 +316,12 @@ export default function CustomerBusinessPage() {
     <div className="space-y-8 max-w-5xl mx-auto pb-16">
       {/* Back button */}
       <div className="flex items-center justify-between">
-        <Link to="/customer" className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-950">
+        <Link to="/customer" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.045em] text-olive-stone hover:text-midnight-ink">
           <ArrowLeft className="h-4 w-4" />
           Back to explore
         </Link>
-        <button className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 shadow-sm transition">
-          <Share2 className="h-3.5 w-3.5" />
+        <button className="btn-outline text-[11px] py-1.5 px-3.5">
+          <Share2 className="h-3.5 w-3.5 mr-1" />
           Share
         </button>
       </div>
@@ -331,23 +331,23 @@ export default function CustomerBusinessPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="rounded-[28px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5"
+        className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-5"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-100 pb-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-soft-mist pb-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">{business.name}</h1>
-              {business.is_verified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
+              <h1 className="truncate text-2xl font-bold tracking-tight text-midnight-ink sm:text-3xl">{business.name}</h1>
+              {business.is_verified && <BadgeCheck className="h-5 w-5 text-emerald-600" />}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-neutral-500">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2.5 py-1 text-[#db2777]">
-                <Star className="h-3.5 w-3.5 fill-[#db2777] text-[#db2777]" />
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.045em] text-olive-stone">
+              <span className="inline-flex items-center gap-1 border border-soft-mist bg-white px-2.5 py-1 text-midnight-ink rounded-[8px]">
+                <Star className="h-3.5 w-3.5 fill-midnight-ink text-midnight-ink" />
                 {Number(business.average_rating || 0).toFixed(1)}
               </span>
               <span>{business.review_count} reviews</span>
               {business.city && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-neutral-400" />
+                <span className="inline-flex items-center gap-1 normal-case">
+                  <MapPin className="h-3.5 w-3.5 text-olive-stone" />
                   {business.city}
                 </span>
               )}
@@ -358,7 +358,7 @@ export default function CustomerBusinessPage() {
           <button
             onClick={ctaState.action}
             disabled={bookingMutation.isPending}
-            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-extrabold shadow-md transition duration-200 active:scale-95 ${ctaState.className}`}
+            className={`inline-flex items-center gap-2 rounded-[8px] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.045em] border transition duration-150 active:scale-95 cursor-pointer ${ctaState.className}`}
           >
             {bookingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
             {ctaState.text}
@@ -368,7 +368,7 @@ export default function CustomerBusinessPage() {
         {/* Gallery grid images */}
         <div className="grid gap-3 grid-cols-3">
           {heroImages.map((image, index) => (
-            <div key={`${image}-${index}`} className="aspect-[16/11] overflow-hidden rounded-[20px] bg-[#f9f5f7] border border-neutral-100 shadow-sm">
+            <div key={`${image}-${index}`} className="aspect-[16/11] overflow-hidden rounded-[12px] bg-white border border-soft-mist">
               <img src={image || heroFallback} alt={business.name} className="h-full w-full object-cover transition hover:scale-103 duration-300" />
             </div>
           ))}
@@ -376,25 +376,25 @@ export default function CustomerBusinessPage() {
       </motion.section>
 
       {/* ── 2. BOOK APPOINTMENT CARD (Pushed to absolute top flow) ── */}
-      <section className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-5">
-        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+      <section className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-5">
+        <div className="flex items-center justify-between border-b border-soft-mist pb-3">
           <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Appointment</p>
-            <h2 className="text-lg font-bold text-neutral-800">Book Appointment</h2>
+            <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Appointment</p>
+            <h2 className="text-lg font-bold text-midnight-ink">Book Appointment</h2>
           </div>
-          {slotsLoading && <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />}
+          {slotsLoading && <Loader2 className="h-4 w-4 animate-spin text-olive-stone" />}
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-bold text-neutral-600">Select Branch</label>
+            <label className="mb-1.5 block text-xs font-bold text-olive-stone uppercase tracking-wider">Select Branch</label>
             <select
               value={activeBranchId}
               onChange={(e) => {
                 setSelectedBranchId(e.target.value)
                 setSelectedSlot(null)
               }}
-              className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-semibold"
+              className="w-full rounded-[8px] border border-soft-mist bg-white px-4 py-2.5 text-xs outline-none focus:border-midnight-ink transition-all font-semibold"
             >
               {branches.map((branch: Branch) => (
                 <option key={branch.id} value={branch.id}>
@@ -405,7 +405,7 @@ export default function CustomerBusinessPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold text-neutral-600">Select Date</label>
+            <label className="mb-1.5 block text-xs font-bold text-olive-stone uppercase tracking-wider">Select Date</label>
             <input
               type="date"
               min={today()}
@@ -414,26 +414,26 @@ export default function CustomerBusinessPage() {
                 setBookingDate(e.target.value)
                 setSelectedSlot(null)
               }}
-              className="w-full rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-semibold"
+              className="w-full rounded-[8px] border border-soft-mist bg-white px-4 py-2.5 text-xs outline-none focus:border-midnight-ink transition-all font-semibold"
             />
           </div>
         </div>
 
         {/* Selected Summary Details */}
-        <div className="rounded-2xl bg-[#fafafa] border border-neutral-100 p-4 space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-neutral-500">Selected Services</span>
-            <span className="text-neutral-800 bg-white px-2.5 py-1 rounded-full shadow-sm border border-neutral-100">
+        <div className="rounded-[12px] bg-white border border-soft-mist p-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.045em]">
+            <span className="text-olive-stone">Selected Services</span>
+            <span className="text-midnight-ink bg-white px-2.5 py-1 rounded-[8px] border border-soft-mist">
               {selectedServices.length} Selected
             </span>
           </div>
-          <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-neutral-500">Total Duration</span>
-            <span className="text-neutral-800">{totalDuration || 0} min</span>
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.045em]">
+            <span className="text-olive-stone">Total Duration</span>
+            <span className="text-midnight-ink">{totalDuration || 0} min</span>
           </div>
-          <div className="flex items-center justify-between text-xs font-semibold pt-2.5 border-t border-neutral-200/60">
-            <span className="text-neutral-500 font-bold">Estimated Cost</span>
-            <span className="text-sm font-extrabold text-[#db2777]">Rs {totalPrice.toFixed(0)}</span>
+          <div className="flex items-center justify-between text-xs font-semibold pt-2.5 border-t border-soft-mist">
+            <span className="text-olive-stone font-bold uppercase tracking-[0.045em]">Estimated Cost</span>
+            <span className="text-sm font-bold text-midnight-ink">Rs {totalPrice.toFixed(0)}</span>
           </div>
         </div>
 
@@ -442,20 +442,20 @@ export default function CustomerBusinessPage() {
           <button
             onClick={ctaState.action}
             disabled={bookingMutation.isPending}
-            className={`w-full py-3.5 rounded-full text-xs font-extrabold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-97 ${ctaState.className}`}
+            className={`w-full py-3.5 rounded-[8px] text-xs font-semibold uppercase tracking-[0.045em] border transition duration-200 flex items-center justify-center gap-2 active:scale-97 cursor-pointer ${ctaState.className}`}
           >
             {bookingMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
             {ctaState.text}
           </button>
 
           {bookingMutation.error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-[8px] text-xs font-medium">
               {bookingMutation.error instanceof Error ? bookingMutation.error.message : "Could not create booking."}
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold">
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-[8px] text-xs font-bold">
               {successMessage}
             </div>
           )}
@@ -463,19 +463,19 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 3. SERVICES SECTION ── */}
-      <section id="services" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
-        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+      <section id="services" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-soft-mist pb-3">
           <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Service Menu</p>
-            <h2 className="text-lg font-bold text-neutral-800">Services Checklist</h2>
+            <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Service Menu</p>
+            <h2 className="text-lg font-bold text-midnight-ink">Services Checklist</h2>
           </div>
-          {servicesLoading && <Loader2 className="h-4.5 w-4.5 animate-spin text-neutral-400" />}
+          {servicesLoading && <Loader2 className="h-4.5 w-4.5 animate-spin text-olive-stone" />}
         </div>
 
         <div className="space-y-6">
           {categories.map((category) => (
             <div key={category.id || "uncategorized"} className="space-y-2.5">
-              <h3 className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider">{category.name}</h3>
+              <h3 className="text-xs font-extrabold text-olive-stone uppercase tracking-wider">{category.name}</h3>
               <div className="grid gap-3">
                 {category.services.map((service: Service) => {
                   const isChecked = selectedServiceIds.includes(service.id)
@@ -483,25 +483,23 @@ export default function CustomerBusinessPage() {
                     <button
                       key={service.id}
                       onClick={() => toggleService(service.id)}
-                      className={`w-full rounded-2xl border p-4 text-left transition duration-200 ${
-                        isChecked
-                          ? "border-[#db2777] bg-pink-50/20 shadow-inner"
-                          : "border-neutral-150 bg-white hover:bg-neutral-50"
-                      }`}
+                      className={`w-full rounded-[12px] border p-4 text-left transition duration-200 cursor-pointer ${isChecked
+                          ? "border-midnight-ink bg-soft-mist/20"
+                          : "border-soft-mist bg-white hover:bg-soft-mist/10"
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-neutral-800">{service.name}</p>
-                          <p className="mt-0.5 text-[10px] font-semibold text-neutral-400">{service.duration_minutes} min</p>
+                          <p className="text-sm font-bold text-midnight-ink">{service.name}</p>
+                          <p className="mt-0.5 text-[10px] font-semibold text-olive-stone uppercase tracking-[0.045em]">{service.duration_minutes} min</p>
                           {service.description && (
-                            <p className="mt-2 text-xs leading-relaxed text-neutral-500">{service.description}</p>
+                            <p className="mt-2 text-xs leading-relaxed text-olive-stone">{service.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-extrabold text-[#db2777]">Rs {Number(service.min_price || 0).toFixed(0)}</span>
-                          <span className={`h-5 w-5 rounded-full border flex items-center justify-center transition-all ${
-                            isChecked ? "bg-[#db2777] border-[#db2777] text-white" : "border-neutral-300"
-                          }`}>
+                          <span className="text-sm font-bold text-midnight-ink">Rs {Number(service.min_price || 0).toFixed(0)}</span>
+                          <span className={`h-5 w-5 rounded-[8px] border flex items-center justify-center transition-all ${isChecked ? "bg-midnight-ink border-midnight-ink text-white" : "border-soft-mist"
+                            }`}>
                             {isChecked && <Check className="h-3 w-3" />}
                           </span>
                         </div>
@@ -516,18 +514,18 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 4. AVAILABLE TIMES SLOTS SECTION ── */}
-      <section id="available-times" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+      <section id="available-times" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
         <div>
-          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Timing Selection</p>
-          <h2 className="text-lg font-bold text-neutral-800">Available Times</h2>
+          <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Timing Selection</p>
+          <h2 className="text-lg font-bold text-midnight-ink">Available Times</h2>
         </div>
 
         {selectedServiceIds.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-neutral-200 p-4 text-xs font-semibold text-neutral-400 text-center">
+          <p className="rounded-[12px] border border-dashed border-soft-mist p-4 text-xs font-semibold text-olive-stone text-center bg-white">
             Please check / select at least one service above to unlock slot timings.
           </p>
         ) : uniqueStartTimes.length === 0 && !slotsLoading ? (
-          <p className="rounded-2xl border border-dashed border-neutral-200 p-4 text-xs font-semibold text-neutral-400 text-center">
+          <p className="rounded-[12px] border border-dashed border-soft-mist p-4 text-xs font-semibold text-olive-stone text-center bg-white">
             No slot times available for selected services on this date.
           </p>
         ) : (
@@ -546,11 +544,10 @@ export default function CustomerBusinessPage() {
                         end_time: timeInfo.end_time
                       })
                     }}
-                    className={`rounded-full border py-2.5 text-center text-xs font-bold transition duration-200 cursor-pointer ${
-                      isSelected
-                        ? "bg-neutral-900 border-neutral-950 text-white shadow-sm"
-                        : "bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300"
-                    }`}
+                    className={`rounded-[8px] border py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.045em] transition duration-200 cursor-pointer ${isSelected
+                        ? "bg-midnight-ink border-midnight-ink text-white"
+                        : "bg-white border-soft-mist text-olive-stone hover:border-midnight-ink hover:text-midnight-ink"
+                      }`}
                   >
                     {formatTime(timeInfo.start_time)}
                   </button>
@@ -560,19 +557,18 @@ export default function CustomerBusinessPage() {
 
             {/* Specialist Preference dropdown inside timing context */}
             {selectedSlot && (
-              <div className="rounded-2xl bg-neutral-50/50 p-4 border border-neutral-100 space-y-2">
-                <label className="block text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">
+              <div className="rounded-[12px] bg-white p-4 border border-soft-mist space-y-2">
+                <label className="block text-[10px] font-bold text-olive-stone uppercase tracking-wider">
                   Specialist Preference
                 </label>
                 <div className="grid sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedSlot({ ...selectedSlot, employee_id: null, employee_name: "Any specialist" })}
-                    className={`flex items-center justify-between rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                      selectedSlot.employee_id === null
-                        ? "bg-[#db2777]/10 border-[#db2777] text-[#db2777]"
-                        : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                    }`}
+                    className={`flex items-center justify-between rounded-[8px] border px-4 py-2.5 text-xs font-semibold transition cursor-pointer ${selectedSlot.employee_id === null
+                        ? "bg-midnight-ink border-midnight-ink text-white"
+                        : "bg-white border-soft-mist text-olive-stone hover:border-midnight-ink"
+                      }`}
                   >
                     <span>Any Specialist</span>
                     {selectedSlot.employee_id === null && <Check className="h-3.5 w-3.5" />}
@@ -587,11 +583,10 @@ export default function CustomerBusinessPage() {
                           key={employee.id || "any"}
                           type="button"
                           onClick={() => setSelectedSlot({ ...selectedSlot, employee_id: employee.id, employee_name: employee.name })}
-                          className={`flex items-center justify-between rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                            isChosen
-                              ? "bg-[#db2777]/10 border-[#db2777] text-[#db2777]"
-                              : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                          }`}
+                          className={`flex items-center justify-between rounded-[8px] border px-4 py-2.5 text-xs font-semibold transition cursor-pointer ${isChosen
+                              ? "bg-midnight-ink border-midnight-ink text-white"
+                              : "bg-white border-soft-mist text-olive-stone hover:border-midnight-ink"
+                            }`}
                         >
                           <span>{employee.name}</span>
                           {isChosen && <Check className="h-3.5 w-3.5" />}
@@ -604,13 +599,13 @@ export default function CustomerBusinessPage() {
 
             {/* Notes input */}
             <div className="space-y-1.5 pt-2">
-              <label className="block text-xs font-bold text-neutral-600">Booking Notes (Optional)</label>
+              <label className="block text-xs font-bold text-olive-stone uppercase tracking-wider">Booking Notes (Optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Any specific instructions or preferences for your booking..."
-                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-neutral-900 transition-all font-medium"
+                className="w-full resize-none rounded-[8px] border border-soft-mist bg-white px-4 py-3 text-xs outline-none focus:border-midnight-ink transition-all font-medium text-midnight-ink"
               />
             </div>
           </div>
@@ -618,24 +613,24 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 5. REVIEWS SECTION ── */}
-      <section id="reviews" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+      <section id="reviews" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
         <div>
-          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Feedback</p>
-          <h2 className="text-lg font-bold text-neutral-800">Reviews &amp; Ratings</h2>
+          <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Feedback</p>
+          <h2 className="text-lg font-bold text-midnight-ink">Reviews &amp; Ratings</h2>
         </div>
 
         <div className="grid gap-5 md:grid-cols-[220px_1fr]">
-          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 flex flex-col items-center justify-center text-center">
-            <p className="text-4xl font-extrabold text-neutral-900 tracking-tight">
+          <div className="rounded-[12px] border border-soft-mist bg-white p-4 flex flex-col items-center justify-center text-center">
+            <p className="text-4xl font-extrabold text-midnight-ink tracking-tight">
               {Number(business.average_rating || 0).toFixed(1)}
             </p>
-            <p className="mt-1 text-[10px] font-bold text-neutral-400 uppercase">{reviews?.total || 0} Reviews</p>
+            <p className="mt-1 text-[10px] font-bold text-olive-stone uppercase tracking-[0.045em]">{reviews?.total || 0} Reviews</p>
             <div className="mt-4 space-y-1.5 w-full">
               {ratingBreakdown.map((bucket) => (
-                <div key={bucket.rating} className="grid grid-cols-[12px_1fr_12px] items-center gap-2 text-[10px] font-bold text-neutral-500">
+                <div key={bucket.rating} className="grid grid-cols-[12px_1fr_12px] items-center gap-2 text-[10px] font-bold text-olive-stone uppercase tracking-[0.045em]">
                   <span>{bucket.rating}</span>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
-                    <div className="h-full bg-[#db2777]" style={{ width: `${bucket.percentage}%` }} />
+                  <div className="h-1.5 overflow-hidden rounded-[8px] bg-soft-mist/40">
+                    <div className="h-full bg-midnight-ink" style={{ width: `${bucket.percentage}%` }} />
                   </div>
                   <span>{bucket.count}</span>
                 </div>
@@ -645,18 +640,18 @@ export default function CustomerBusinessPage() {
 
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {(reviews?.items ?? []).slice(0, 8).map((review) => (
-              <div key={review.id} className="rounded-2xl border border-neutral-100 p-4 space-y-1 bg-white">
+              <div key={review.id} className="rounded-[12px] border border-soft-mist p-4 space-y-1 bg-white">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold text-neutral-800">{review.customer_name || "Verified Customer"}</p>
-                    <p className="text-[10px] text-neutral-400 font-medium">{formatDate(review.created_at.slice(0, 10))}</p>
+                    <p className="text-xs font-bold text-midnight-ink">{review.customer_name || "Verified Customer"}</p>
+                    <p className="text-[10px] text-olive-stone font-medium">{formatDate(review.created_at.slice(0, 10))}</p>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff2f6] px-2.5 py-0.5 text-[10px] font-extrabold text-[#db2777]">
-                    <Star className="h-3 w-3 fill-[#db2777] text-[#db2777]" />
+                  <span className="inline-flex items-center gap-1 border border-soft-mist bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.045em] text-midnight-ink rounded-[8px]">
+                    <Star className="h-3 w-3 fill-midnight-ink text-midnight-ink" />
                     {review.rating}
                   </span>
                 </div>
-                {review.comment && <p className="text-xs text-neutral-600 leading-relaxed pt-1">{review.comment}</p>}
+                {review.comment && <p className="text-xs text-olive-stone leading-relaxed pt-1">{review.comment}</p>}
               </div>
             ))}
           </div>
@@ -665,17 +660,17 @@ export default function CustomerBusinessPage() {
 
       {/* ── 6. WORKSPACE PORTFOLIO GALLERY ── */}
       {gallery && gallery.length > 0 && (
-        <section className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-3">
+        <section className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-3">
           <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Showcase</p>
-            <h2 className="text-lg font-bold text-neutral-800">Workspace Portfolio</h2>
+            <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Showcase</p>
+            <h2 className="text-lg font-bold text-midnight-ink">Workspace Portfolio</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {gallery.map((photo) => (
               <div
                 key={photo.id}
                 onClick={() => setLightboxUrl(photo.url)}
-                className="aspect-[4/3] rounded-2xl overflow-hidden border border-neutral-100 cursor-pointer group relative shadow-sm"
+                className="aspect-[4/3] rounded-[12px] overflow-hidden border border-soft-mist cursor-pointer group relative"
               >
                 <img
                   src={photo.url}
@@ -683,7 +678,7 @@ export default function CustomerBusinessPage() {
                   className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
-                  <span className="text-[9px] text-white font-extrabold bg-neutral-950/80 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  <span className="text-[9px] text-white font-semibold bg-midnight-ink px-2.5 py-1 rounded-[8px] uppercase tracking-[0.045em]">
                     Zoom
                   </span>
                 </div>
@@ -694,32 +689,32 @@ export default function CustomerBusinessPage() {
       )}
 
       {/* ── 7. ABOUT SECTION ── */}
-      <section id="about" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+      <section id="about" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
         <div>
-          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Contact &amp; Bio</p>
-          <h2 className="text-lg font-bold text-neutral-800">About the Business</h2>
+          <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Contact &amp; Bio</p>
+          <h2 className="text-lg font-bold text-midnight-ink">About the Business</h2>
         </div>
         <div className="grid md:grid-cols-[280px_1fr] gap-4">
-          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 space-y-3">
-            <h3 className="text-xs font-bold text-neutral-800 border-b border-neutral-100 pb-1.5">Direct Contacts</h3>
-            <div className="space-y-2 text-xs font-semibold text-neutral-600">
+          <div className="rounded-[12px] border border-soft-mist bg-white p-4 space-y-3">
+            <h3 className="text-xs font-bold text-midnight-ink border-b border-soft-mist pb-1.5 uppercase tracking-[0.045em]">Direct Contacts</h3>
+            <div className="space-y-2 text-xs font-semibold text-olive-stone">
               {business.phone && (
                 <p className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-neutral-400" />
+                  <Phone className="h-4 w-4 text-olive-stone" />
                   {business.phone}
                 </p>
               )}
               {business.email && <p className="truncate">{business.email}</p>}
               {activeBranch?.address && (
                 <p className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-olive-stone" />
                   {activeBranch.address}
                 </p>
               )}
             </div>
           </div>
           <div className="flex flex-col justify-center">
-            <p className="text-xs leading-relaxed text-neutral-600">
+            <p className="text-xs leading-relaxed text-olive-stone">
               {business.description || "This curated studio offers top-tier specialists, high quality raw products, and a calm, quiet atmosphere designed to yield premium appointment results."}
             </p>
           </div>
@@ -727,17 +722,17 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 8. HOURS & ADDRESS MAP ── */}
-      <section id="hours" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
+      <section id="hours" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
         <div>
-          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Operations</p>
-          <h2 className="text-lg font-bold text-neutral-800">Working Hours &amp; Location</h2>
+          <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Operations</p>
+          <h2 className="text-lg font-bold text-midnight-ink">Working Hours &amp; Location</h2>
         </div>
         <div className="grid md:grid-cols-[1fr_320px] gap-5">
           <div className="grid sm:grid-cols-2 gap-2">
             {dayLabels.map((day) => (
-              <div key={day} className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50/50 px-3.5 py-2.5">
-                <span className="text-xs font-bold text-neutral-600">{day}</span>
-                <span className="text-xs font-bold text-neutral-800">
+              <div key={day} className="flex items-center justify-between rounded-[8px] border border-soft-mist bg-white px-3.5 py-2.5">
+                <span className="text-xs font-bold text-olive-stone uppercase tracking-[0.045em]">{day}</span>
+                <span className="text-xs font-bold text-midnight-ink">
                   {activeBranch?.opening_time && activeBranch?.closing_time
                     ? `${formatTime(activeBranch.opening_time)} - ${formatTime(activeBranch.closing_time)}`
                     : "Closed"}
@@ -746,24 +741,24 @@ export default function CustomerBusinessPage() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-neutral-150 bg-neutral-50/30 p-4 flex flex-col justify-between space-y-4">
+          <div className="rounded-[12px] border border-soft-mist bg-white p-4 flex flex-col justify-between space-y-4">
             <div>
-              <p className="text-xs font-bold text-neutral-800">{activeBranch?.name || "Main branch"}</p>
-              <p className="mt-1 text-xs text-neutral-500">{activeBranch?.address || business.address || "Location coordinate mapping not available"}</p>
+              <p className="text-xs font-bold text-midnight-ink">{activeBranch?.name || "Main branch"}</p>
+              <p className="mt-1 text-xs text-olive-stone">{activeBranch?.address || business.address || "Location coordinate mapping not available"}</p>
             </div>
             {activeBranch?.latitude !== null && activeBranch?.latitude !== undefined &&
-             activeBranch?.longitude !== null && activeBranch?.longitude !== undefined ? (
+              activeBranch?.longitude !== null && activeBranch?.longitude !== undefined ? (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${activeBranch.latitude},${activeBranch.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-white border border-neutral-200 shadow-sm hover:shadow-md transition text-xs font-extrabold text-neutral-800"
+                className="btn-outline text-[11px] w-full py-2.5 px-4"
               >
-                <MapPin className="h-4 w-4 text-[#db2777]" />
+                <MapPin className="h-4 w-4 text-midnight-ink mr-1" />
                 Open Google Maps Map
               </a>
             ) : (
-              <p className="text-xs text-neutral-400 font-semibold flex items-center gap-1.5">
+              <p className="text-xs text-olive-stone font-semibold flex items-center gap-1.5">
                 <Search className="h-3.5 w-3.5" />
                 Coords listed on checkout picker
               </p>
@@ -773,16 +768,16 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 9. MEET THE TEAM SECTION ── */}
-      <section id="team" className="rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-4">
-        <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
+      <section id="team" className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-soft-mist pb-3">
           <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Specialists</p>
-            <h2 className="text-lg font-bold text-neutral-800">Meet the Team</h2>
+            <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Specialists</p>
+            <h2 className="text-lg font-bold text-midnight-ink">Meet the Team</h2>
           </div>
-          <Users className="h-4.5 w-4.5 text-neutral-400" />
+          <Users className="h-4.5 w-4.5 text-olive-stone" />
         </div>
         {teamMembers.length === 0 ? (
-          <p className="text-xs text-neutral-400 font-semibold text-center py-4">
+          <p className="text-xs text-olive-stone font-semibold text-center py-4">
             Team specialist profiles will appear here once service schedules are configured.
           </p>
         ) : (
@@ -790,13 +785,13 @@ export default function CustomerBusinessPage() {
             {teamMembers.map((member) => (
               <div key={member.id} className="text-center space-y-2">
                 {member.photo ? (
-                  <img src={member.photo} alt={member.name} className="mx-auto h-16 w-16 rounded-full object-cover border-2 border-white shadow-md" />
+                  <img src={member.photo} alt={member.name} className="mx-auto h-16 w-16 rounded-full object-cover border-2 border-white shadow-sm" />
                 ) : (
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#db2777]/10 text-xs font-extrabold text-[#db2777]">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-soft-mist/40 text-xs font-bold text-midnight-ink">
                     {initials(member.name)}
                   </div>
                 )}
-                <p className="truncate text-[10px] font-extrabold text-neutral-700">{member.name}</p>
+                <p className="truncate text-[10px] font-bold text-midnight-ink uppercase tracking-[0.045em]">{member.name}</p>
               </div>
             ))}
           </div>
@@ -804,20 +799,20 @@ export default function CustomerBusinessPage() {
       </section>
 
       {/* ── 10. OTHER SALONS NEARBY (Moved safely to the very bottom to avoid losing customer conversion) ── */}
-      <section className="rounded-[24px] border border-neutral-100 bg-[#fbfdfc] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-4">
+      <section className="rounded-[12px] border border-soft-mist bg-white p-5 space-y-4">
         <div>
-          <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">Recommendations</p>
-          <h2 className="text-lg font-bold text-neutral-800">Other Salons Nearby</h2>
+          <p className="text-[10px] text-olive-stone uppercase tracking-widest font-bold">Recommendations</p>
+          <h2 className="text-lg font-bold text-midnight-ink">Other Salons Nearby</h2>
         </div>
         {nearbyBusinesses.length === 0 ? (
-          <p className="text-xs text-neutral-400 font-semibold text-center">No nearby recommendations yet.</p>
+          <p className="text-xs text-olive-stone font-semibold text-center">No nearby recommendations yet.</p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {nearbyBusinesses.map((item: PublicBusiness) => (
               <Link
                 key={item.id}
                 to={`/customer/businesses/${item.slug || item.id}`}
-                className="flex items-center gap-3.5 rounded-2xl border border-neutral-200 bg-white p-3.5 transition hover:bg-neutral-50 shadow-sm hover:shadow"
+                className="flex items-center gap-3.5 rounded-[12px] border border-soft-mist bg-white p-3.5 transition hover:bg-soft-mist/10"
               >
                 <img
                   src={item.cover_url || item.logo_url || heroFallback}
@@ -825,10 +820,10 @@ export default function CustomerBusinessPage() {
                   className="h-16 w-20 rounded-xl object-cover shrink-0"
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-extrabold text-neutral-800">{item.name}</p>
-                  <p className="truncate text-[10px] text-neutral-400 font-semibold">{item.address || item.city || "Address not listed"}</p>
-                  <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-neutral-600 bg-neutral-50 px-2 py-0.5 rounded-full">
-                    <Star className="h-3 w-3 fill-[#ffcc00] text-[#ffcc00]" />
+                  <p className="truncate text-xs font-bold text-midnight-ink">{item.name}</p>
+                  <p className="truncate text-[10px] text-olive-stone font-semibold">{item.address || item.city || "Address not listed"}</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.045em] text-midnight-ink border border-soft-mist px-2 py-0.5 rounded-[8px]">
+                    <Star className="h-3 w-3 fill-midnight-ink text-midnight-ink" />
                     {Number(item.average_rating || 0).toFixed(1)} &bull; {item.review_count} reviews
                   </p>
                 </div>

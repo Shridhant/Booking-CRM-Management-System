@@ -189,7 +189,7 @@ export default function DashboardLayout() {
           />
 
           {/* Drawer content */}
-          <div className="relative flex flex-col w-72 max-w-xs bg-white border-r border-[#ebebeb] z-10 animate-slide-in">
+          <div className="relative flex flex-col h-full w-72 max-w-xs bg-white border-r border-[#ebebeb] z-10 animate-slide-in">
             {/* Close button */}
             <div className="absolute top-4 right-4">
               <button
